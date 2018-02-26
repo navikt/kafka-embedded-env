@@ -28,9 +28,17 @@ object KafkaEnvironment {
         ZKServer.onReceive(ZKStop)
     }
 
+    // see the following links for creating topic
+    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/admin/TopicCommand.scala
+    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/utils/ZkUtils.scala
+    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/admin/AdminUtils.scala
+
     private fun createTopics(topics: List<String>, noPartitions: Int) {
 
-        val zkUtils =  ZkUtils.apply(ZKServer.getUrl(), 3_000, 3_000, false)
+        val sessTimeout = 1500
+        val connTimeout = 500
+
+        val zkUtils =  ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false)
 
         topics.forEach {
 
@@ -52,7 +60,7 @@ object KafkaEnvironment {
 
             AdminUtils.createTopic(zkUtils, it, partitions, replicas, config, rackAwareDisabled)
 
-            while (!AdminUtils.topicExists(zkUtils, it)) Thread.sleep(250) //waiting...
+            //while (!AdminUtils.topicExists(zkUtils, it)) {} //Thread.sleep(250) //waiting...
         }
 
         zkUtils.close()

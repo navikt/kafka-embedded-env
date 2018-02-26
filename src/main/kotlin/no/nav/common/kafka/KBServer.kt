@@ -14,6 +14,9 @@ import java.util.*
 
 class KBServer private constructor(override val port: Int, id: Int, private val noPartitions: Int) : ServerBase() {
 
+    // see link below for starting up a kafka broker
+    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
+
     override val url = "PLAINTEXT://$host:$port"
 
     private val logDir = File(System.getProperty("java.io.tmpdir"),"inmkafkabroker/ID$id").apply {
@@ -42,28 +45,46 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
 
     private fun getDefaultProps(id: Int) = Properties().apply {
 
+        // see link below for details - trying to make lean embedded kafka broker
+        // https://kafka.apache.org/documentation/#brokerconfigs
+
         set(KafkaConfig.ZkConnectProp(), ZKServer.getUrl())
-        set(KafkaConfig.ZkConnectionTimeoutMsProp(), 10_000)
+        set(KafkaConfig.ZkConnectionTimeoutMsProp(), 500)
+        set(KafkaConfig.ZkSessionTimeoutMsProp(), 30_000)
 
         set(KafkaConfig.BrokerIdProp(),id)
         set(KafkaConfig.ListenersProp(), url)
 
-        set(KafkaConfig.NumNetworkThreadsProp(),2)
-        set(KafkaConfig.NumIoThreadsProp(),4)
+        set(KafkaConfig.NumNetworkThreadsProp(),3) //3
+        set(KafkaConfig.NumIoThreadsProp(),8) //8
+        set(KafkaConfig.BackgroundThreadsProp(), 10) //10
 
-        // log.dir is showing up in log output, but cannot find a corresponding kafka config option
+        // noPartitions is identical with no of brokers
+        set(KafkaConfig.NumPartitionsProp(),noPartitions)
+        set(KafkaConfig.DefaultReplicationFactorProp(), noPartitions)
+        set(KafkaConfig.MinInSyncReplicasProp(), noPartitions)
+
+        set(KafkaConfig.OffsetsTopicPartitionsProp(), noPartitions) //50
+        set(KafkaConfig.OffsetsTopicReplicationFactorProp(), noPartitions.toShort()) //3
+
+        set(KafkaConfig.TransactionsTopicPartitionsProp(), noPartitions) //50
+        set(KafkaConfig.TransactionsTopicReplicationFactorProp(), noPartitions.toShort()) //3
+        set(KafkaConfig.TransactionsTopicMinISRProp(), noPartitions)
+
+        //set(KafkaConfig.RequestTimeoutMsProp(), 2_000)
+        //set(KafkaConfig.ReplicaSocketTimeoutMsProp(), 2_000)
+
+        set(KafkaConfig.LeaderImbalanceCheckIntervalSecondsProp(), 10)
+
         set("log.dir",logDir.absolutePath)
         set(KafkaConfig.LogDirsProp(),logDir.absolutePath)
 
         set(KafkaConfig.AutoCreateTopicsEnableProp(),true.toString())
 
-        set(KafkaConfig.NumPartitionsProp(),noPartitions.toString())
-        set(KafkaConfig.DefaultReplicationFactorProp(),1.toString())
+        set(KafkaConfig.NumRecoveryThreadsPerDataDirProp(),1)
 
-        set(KafkaConfig.OffsetsTopicReplicationFactorProp(),1.toString())
-        set(KafkaConfig.TransactionsTopicMinISRProp(),1.toString())
-        set(KafkaConfig.TransactionsTopicReplicationFactorProp(),1.toString())
-        set(KafkaConfig.NumRecoveryThreadsPerDataDirProp(),1.toString())
+        set(KafkaConfig.ControlledShutdownMaxRetriesProp(), 1)
+        set(KafkaConfig.ControlledShutdownRetryBackoffMsProp(), 500)
     }
 
     companion object : ServerActor<KBServer>() {
@@ -85,7 +106,9 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
 
                 KBStop -> if (!servers.isEmpty()) {
 
-                    servers.asReversed().forEach { it.stop() }
+                    servers.forEach {
+                        it.stop()
+                    }
                     servers.removeAll { true }
                 }
 

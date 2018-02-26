@@ -10,18 +10,21 @@ import org.jetbrains.spek.api.dsl.it
 
 object KafkaEnvironmentSpec : Spek({
 
+    val sessTimeout = 1500
+    val connTimeout = 500
+
     describe("active kafka env of one broker with none topics created") {
 
         val b = 1
         val t = emptyList<String>()
 
         beforeGroup {
-            KafkaEnvironment.start()
+            KafkaEnvironment.start(b, t)
         }
 
         it("should have $b broker(s)") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nBroker = allBrokersInCluster.size()
                 close()
                 nBroker
@@ -31,7 +34,7 @@ object KafkaEnvironmentSpec : Spek({
 
         it("should not be any topics available") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nTopics = allTopics.size()
                 close()
                 nTopics
@@ -43,18 +46,18 @@ object KafkaEnvironmentSpec : Spek({
         }
     }
 
-    describe("active kafka env of one broker with 2 topics created") {
+    describe("active kafka env of 1 broker with topics created") {
 
         val b = 1
-        val t = listOf("test1","test2")
+        val t = listOf("test1")
 
         beforeGroup {
-            KafkaEnvironment.start(topics = t)
+            KafkaEnvironment.start(b, t)
         }
 
         it("should have $b broker(s)") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nBroker = allBrokersInCluster.size()
                 close()
                 nBroker
@@ -64,7 +67,7 @@ object KafkaEnvironmentSpec : Spek({
 
         it("should be ${t.size} topics available") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nTopics = allTopics.size()
                 close()
                 nTopics
@@ -73,7 +76,7 @@ object KafkaEnvironmentSpec : Spek({
 
         it("should have topics as requested available") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val topics = allTopics
                 val lTopics = mutableListOf<String>()
 
@@ -88,7 +91,7 @@ object KafkaEnvironmentSpec : Spek({
         }
     }
 
-    describe("active kafka env of 2 brokers with 4 topics created") {
+    describe("active kafka env of 2 brokers with topics created") {
 
         val b = 2
         val t = listOf("test1","test2","test3","test4")
@@ -99,7 +102,7 @@ object KafkaEnvironmentSpec : Spek({
 
         it("should have $b broker(s)") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nBroker = allBrokersInCluster.size()
                 close()
                 nBroker
@@ -109,7 +112,7 @@ object KafkaEnvironmentSpec : Spek({
 
         it("should be ${t.size} topics available") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nTopics = allTopics.size()
                 close()
                 nTopics
@@ -118,7 +121,7 @@ object KafkaEnvironmentSpec : Spek({
 
         it("should have topics as requested available") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val topics = allTopics
                 val lTopics = mutableListOf<String>()
 

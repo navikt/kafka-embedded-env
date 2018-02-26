@@ -13,6 +13,9 @@ import org.jetbrains.spek.api.dsl.it
 
 object KBServerSpec : Spek({
 
+    val sessTimeout = 1500
+    val connTimeout = 500
+
     describe("active kafka cluster of one broker (start/stop)") {
 
         val b = 1
@@ -25,7 +28,7 @@ object KBServerSpec : Spek({
 
         it("should have $b broker(s)") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nBroker = allBrokersInCluster.size()
                 close()
                 nBroker
@@ -35,7 +38,7 @@ object KBServerSpec : Spek({
 
         it("should not be any topics available") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nTopics = allTopics.size()
                 close()
                 nTopics
@@ -61,7 +64,7 @@ object KBServerSpec : Spek({
 
         it("should have $b broker(s)") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nBroker = allBrokersInCluster.size()
                 close()
                 nBroker
@@ -71,7 +74,7 @@ object KBServerSpec : Spek({
 
         it("should not be any topics available") {
 
-            ZkUtils.apply(ZKServer.getUrl(), 500, 500, false).run {
+            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
                 val nTopics = allTopics.size()
                 close()
                 nTopics
