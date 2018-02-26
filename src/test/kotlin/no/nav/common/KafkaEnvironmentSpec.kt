@@ -1,7 +1,7 @@
 package no.nav.common
 
 import kafka.utils.ZkUtils
-import no.nav.common.zookeeper.ZKServer
+import no.nav.common.embeddedzookeeper.ZKServer
 import org.amshove.kluent.`should be equal to`
 import org.amshove.kluent.`should contain all`
 import org.jetbrains.spek.api.Spek
@@ -13,7 +13,7 @@ object KafkaEnvironmentSpec : Spek({
     val sessTimeout = 1500
     val connTimeout = 500
 
-    describe("active kafka env of one broker with none topics created") {
+    describe("active embeddedkafka env of one broker with none topics created") {
 
         val b = 1
         val t = emptyList<String>()
@@ -46,7 +46,7 @@ object KafkaEnvironmentSpec : Spek({
         }
     }
 
-    describe("active kafka env of 1 broker with topics created") {
+    describe("active embeddedkafka env of 1 broker with topics created") {
 
         val b = 1
         val t = listOf("test1")
@@ -91,7 +91,7 @@ object KafkaEnvironmentSpec : Spek({
         }
     }
 
-    describe("active kafka env of 2 brokers with topics created") {
+    describe("active embeddedkafka env of 2 brokers with topics created") {
 
         val b = 2
         val t = listOf("test1","test2","test3","test4")

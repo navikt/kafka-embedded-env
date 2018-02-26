@@ -1,11 +1,11 @@
-package no.nav.common.kafka
+package no.nav.common.embeddedkafka
 
 import kafka.utils.ZkUtils
-import no.nav.common.utils.KBStart
-import no.nav.common.utils.KBStop
-import no.nav.common.utils.ZKStart
-import no.nav.common.utils.ZKStop
-import no.nav.common.zookeeper.ZKServer
+import no.nav.common.embeddedutils.KBStart
+import no.nav.common.embeddedutils.KBStop
+import no.nav.common.embeddedutils.ZKStart
+import no.nav.common.embeddedutils.ZKStop
+import no.nav.common.embeddedzookeeper.ZKServer
 import org.amshove.kluent.`should be equal to`
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
@@ -16,7 +16,7 @@ object KBServerSpec : Spek({
     val sessTimeout = 1500
     val connTimeout = 500
 
-    describe("active kafka cluster of one broker (start/stop)") {
+    describe("active embeddedkafka cluster of one broker (start/stop)") {
 
         val b = 1
 
@@ -52,7 +52,7 @@ object KBServerSpec : Spek({
         }
     }
 
-    describe("active kafka cluster of 2 brokers (start/stop) for 2nd time") {
+    describe("active embeddedkafka cluster of 2 brokers (start/stop) for 2nd time") {
 
         val b = 2
 
@@ -88,7 +88,7 @@ object KBServerSpec : Spek({
         }
     }
 
-    describe("inactive kafka cluster (no start/stop)") {
+    describe("inactive embeddedkafka cluster (no start/stop)") {
 
         beforeGroup {  }
 

@@ -1,4 +1,4 @@
-package no.nav.common.utils
+package no.nav.common.embeddedutils
 
 abstract class ServerActor<ServerBase> {
 

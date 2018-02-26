@@ -1,11 +1,11 @@
-package no.nav.common.kafka
+package no.nav.common.embeddedkafka
 
 import kafka.metrics.KafkaMetricsReporter
 import kafka.server.KafkaConfig
 import kafka.server.KafkaServer
 import kafka.utils.VerifiableProperties
-import no.nav.common.utils.*
-import no.nav.common.zookeeper.ZKServer
+import no.nav.common.embeddedutils.*
+import no.nav.common.embeddedzookeeper.ZKServer
 import org.apache.commons.io.FileUtils
 import org.apache.kafka.common.utils.Time
 import scala.Option
@@ -14,7 +14,7 @@ import java.util.*
 
 class KBServer private constructor(override val port: Int, id: Int, private val noPartitions: Int) : ServerBase() {
 
-    // see link below for starting up a kafka broker
+    // see link below for starting up a embeddedkafka broker
     // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
 
     override val url = "PLAINTEXT://$host:$port"
@@ -45,7 +45,7 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
 
     private fun getDefaultProps(id: Int) = Properties().apply {
 
-        // see link below for details - trying to make lean embedded kafka broker
+        // see link below for details - trying to make lean embedded embeddedkafka broker
         // https://kafka.apache.org/documentation/#brokerconfigs
 
         set(KafkaConfig.ZkConnectProp(), ZKServer.getUrl())
@@ -124,7 +124,7 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
         // really not relevant
         override fun getPort(): Int = servers.firstOrNull()?.port ?: 0
 
-        // relevant for kafka rest
+        // relevant for embeddedkafka rest
         override fun getUrl(): String = if (servers.isEmpty()) "" else
             servers.map { it.url }.foldRight("",{ u, acc -> if (acc.isEmpty()) u else "$u,$acc" })
 

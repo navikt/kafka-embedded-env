@@ -1,7 +1,7 @@
-package no.nav.common.zookeeper
+package no.nav.common.embeddedzookeeper
 
-import no.nav.common.utils.ZKStart
-import no.nav.common.utils.ZKStop
+import no.nav.common.embeddedutils.ZKStart
+import no.nav.common.embeddedutils.ZKStop
 import org.amshove.kluent.`should be equal to`
 import org.apache.zookeeper.client.FourLetterWordMain
 import org.jetbrains.spek.api.Spek
@@ -10,7 +10,7 @@ import org.jetbrains.spek.api.dsl.it
 
 object ZKServerSpec : Spek({
 
-  describe("active zookeeper (start/stop)") {
+  describe("active embeddedzookeeper (start/stop)") {
 
       beforeGroup {
           ZKServer.onReceive(ZKStart)
@@ -37,7 +37,7 @@ object ZKServerSpec : Spek({
       }
   }
 
-    describe("active zookeeper (start/stop for 2nd time) ") {
+    describe("active embeddedzookeeper (start/stop for 2nd time) ") {
 
         beforeGroup {
             ZKServer.onReceive(ZKStart)
@@ -64,7 +64,7 @@ object ZKServerSpec : Spek({
         }
     }
 
-    describe("inactive zookeeper (no start/stop)") {
+    describe("inactive embeddedzookeeper (no start/stop)") {
 
         beforeGroup {  }
 
@@ -83,7 +83,7 @@ object ZKServerSpec : Spek({
         afterGroup {  }
     }
 
-    describe("active zookeeper with multiple (start/stop) ") {
+    describe("active embeddedzookeeper with multiple (start/stop) ") {
 
         beforeGroup {
             ZKServer.onReceive(ZKStart)

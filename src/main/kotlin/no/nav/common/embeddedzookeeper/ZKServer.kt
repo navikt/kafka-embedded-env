@@ -1,6 +1,6 @@
-package no.nav.common.zookeeper
+package no.nav.common.embeddedzookeeper
 
-import no.nav.common.utils.*
+import no.nav.common.embeddedutils.*
 import org.apache.commons.io.FileUtils
 import org.apache.zookeeper.server.ServerCnxnFactory
 import org.apache.zookeeper.server.ServerConfig
@@ -10,7 +10,7 @@ import java.io.File
 
 class ZKServer private constructor(override val port: Int) : ServerBase() {
 
-    // see link below for starting up zookeeper...
+    // see link below for starting up embeddedzookeeper...
     // https://github.com/apache/zookeeper/blob/e0af6ed7598fc4555d7625ddc8efd86e2281babf/src/java/main/org/apache/zookeeper/server/ZooKeeperServerMain.java
 
     override val url = "$host:$port"
@@ -40,7 +40,7 @@ class ZKServer private constructor(override val port: Int) : ServerBase() {
     override fun start() = cnxnFactory.startup(zkServer)
 
     override fun stop() {
-        cnxnFactory.shutdown() // includes shut down of zookeeper server
+        cnxnFactory.shutdown() // includes shut down of embeddedzookeeper server
         cnxnFactory.join()
         txnLog.close()
         FileUtils.deleteDirectory(dataDir)

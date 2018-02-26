@@ -1,4 +1,4 @@
-package no.nav.common.utils
+package no.nav.common.embeddedutils
 
 import java.io.IOException
 import java.net.ServerSocket

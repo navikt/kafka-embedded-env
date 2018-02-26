@@ -4,12 +4,12 @@ import kafka.admin.AdminUtils
 import kafka.admin.RackAwareMode
 import kafka.admin.TopicCommand
 import kafka.utils.ZkUtils
-import no.nav.common.kafka.KBServer
-import no.nav.common.utils.KBStart
-import no.nav.common.utils.KBStop
-import no.nav.common.utils.ZKStart
-import no.nav.common.utils.ZKStop
-import no.nav.common.zookeeper.ZKServer
+import no.nav.common.embeddedkafka.KBServer
+import no.nav.common.embeddedutils.KBStart
+import no.nav.common.embeddedutils.KBStop
+import no.nav.common.embeddedutils.ZKStart
+import no.nav.common.embeddedutils.ZKStop
+import no.nav.common.embeddedzookeeper.ZKServer
 import java.util.*
 
 object KafkaEnvironment {

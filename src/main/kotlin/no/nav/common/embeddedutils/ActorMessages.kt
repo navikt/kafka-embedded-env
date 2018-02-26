@@ -1,4 +1,4 @@
-package no.nav.common.utils
+package no.nav.common.embeddedutils
 
 sealed class ServerMessages
 object ZKStart : ServerMessages()
