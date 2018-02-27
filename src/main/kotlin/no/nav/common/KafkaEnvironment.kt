@@ -12,16 +12,36 @@ import no.nav.common.embeddedutils.ZKStop
 import no.nav.common.embeddedzookeeper.ZKServer
 import java.util.*
 
+/**
+ * A in-memory kafka environment consisting of
+ * - 1 zookeeper
+ * - configurable no of kafka brokers
+ * - 1 schema registry
+ * - 1 rest gateway
+ *
+ * Also adding configurable topics to the cluster
+ */
 object KafkaEnvironment {
 
-    fun start(noOfBrokers: Int = 1, topics: List<String> = emptyList()) {
+    /**
+     * Start the kafka environment
+     * @param noOfBrokers no of brokers to spin up
+     * @param topics a list of topics to create
+     * @return a map of urls - key values: 'broker', 'schemareg', 'rest'
+     */
+    fun start(noOfBrokers: Int = 1, topics: List<String> = emptyList()) : Map<String,String> {
 
         ZKServer.onReceive(ZKStart)
         KBServer.onReceive(KBStart(noOfBrokers))
 
         if (!topics.isEmpty()) createTopics(topics, noOfBrokers)
+
+        return mapOf("broker" to KBServer.getUrl(),"schema" to "tbd", "rest" to "tbd")
     }
 
+    /**
+     * Stop the kafka environment - all topics and events will be deleted
+     */
     fun stop() {
 
         KBServer.onReceive(KBStop)
