@@ -13,7 +13,6 @@ plugins{
     id "org.jetbrains.kotlin.jvm" version "1.2.21"
     id 'org.junit.platform.gradle.plugin' version '1.0.1'
     id 'maven-publish'
-    //id 'com.github.johnrengelman.shadow' version '2.0.2'
 }
 
 apply {
@@ -42,8 +41,6 @@ repositories {
         url "http://packages.confluent.io/maven"
     }
 }
-
-//'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
@@ -83,20 +80,6 @@ compileTestKotlin {
 }
 
 
-/*
-jar {
-    manifest {
-        attributes 'Export-Package': project.group
-    }
-}
-*/
-
-
-/*shadowJar {
-    configurations = [project.configurations.compile]
-    //archivesBaseName = "navKafkaEnvironment"
-}*/
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -105,13 +88,6 @@ publishing {
         }
     }
 
-/*    publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
-
-            artifact packageJavadoc
-        }
-    }*/
     repositories {
         maven {
             url = uri("$buildDir/repository")
