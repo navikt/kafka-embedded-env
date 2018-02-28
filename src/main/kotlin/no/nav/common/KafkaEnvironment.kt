@@ -5,10 +5,8 @@ import kafka.admin.RackAwareMode
 import kafka.admin.TopicCommand
 import kafka.utils.ZkUtils
 import no.nav.common.embeddedkafka.KBServer
-import no.nav.common.embeddedutils.KBStart
-import no.nav.common.embeddedutils.KBStop
-import no.nav.common.embeddedutils.ZKStart
-import no.nav.common.embeddedutils.ZKStop
+import no.nav.common.embeddedschemaregistry.SRServer
+import no.nav.common.embeddedutils.*
 import no.nav.common.embeddedzookeeper.ZKServer
 import java.util.*
 
@@ -27,16 +25,19 @@ object KafkaEnvironment {
      * Start the kafka environment
      * @param noOfBrokers no of brokers to spin up
      * @param topics a list of topics to create
-     * @return a map of urls - key values: 'broker', 'schemareg', 'rest'
+     * @return a map of urls - key values: 'broker', 'schema', 'rest'
+     *
+     * Observe that the url for multiple brokers will be a string like '<url broker 1>, <url broker 2>, ...'
      */
     fun start(noOfBrokers: Int = 1, topics: List<String> = emptyList()) : Map<String,String> {
 
         ZKServer.onReceive(ZKStart)
         KBServer.onReceive(KBStart(noOfBrokers))
+        SRServer.onReceive(SRStart)
 
         if (!topics.isEmpty()) createTopics(topics, noOfBrokers)
 
-        return mapOf("broker" to KBServer.getUrl(),"schema" to "tbd", "rest" to "tbd")
+        return mapOf("broker" to KBServer.getUrl(),"schema" to SRServer.getUrl(), "rest" to "tbd")
     }
 
     /**
@@ -44,6 +45,7 @@ object KafkaEnvironment {
      */
     fun stop() {
 
+        SRServer.onReceive(SRStop)
         KBServer.onReceive(KBStop)
         ZKServer.onReceive(ZKStop)
     }
