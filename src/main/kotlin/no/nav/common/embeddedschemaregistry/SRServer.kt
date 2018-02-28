@@ -8,6 +8,9 @@ import java.util.*
 
 class SRServer private constructor(override val port: Int) : ServerBase() {
 
+    // see link below for starting up embeddedschemaregistry
+    // https://github.com/confluentinc/schema-registry/blob/4.0.x/core/src/main/java/io/confluent/kafka/schemaregistry/rest/SchemaRegistryMain.java
+
     override val url = "http://$host:$port"
 
     private val scServer = SchemaRegistryRestApplication(

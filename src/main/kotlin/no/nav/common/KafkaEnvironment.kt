@@ -5,6 +5,7 @@ import kafka.admin.RackAwareMode
 import kafka.admin.TopicCommand
 import kafka.utils.ZkUtils
 import no.nav.common.embeddedkafka.KBServer
+import no.nav.common.embeddedkafkarest.KRServer
 import no.nav.common.embeddedschemaregistry.SRServer
 import no.nav.common.embeddedutils.*
 import no.nav.common.embeddedzookeeper.ZKServer
@@ -34,10 +35,11 @@ object KafkaEnvironment {
         ZKServer.onReceive(ZKStart)
         KBServer.onReceive(KBStart(noOfBrokers))
         SRServer.onReceive(SRStart)
+        KRServer.onReceive(KRStart)
 
         if (!topics.isEmpty()) createTopics(topics, noOfBrokers)
 
-        return mapOf("broker" to KBServer.getUrl(),"schema" to SRServer.getUrl(), "rest" to "tbd")
+        return mapOf("broker" to KBServer.getUrl(),"schema" to SRServer.getUrl(), "rest" to KRServer.getUrl())
     }
 
     /**
@@ -45,6 +47,7 @@ object KafkaEnvironment {
      */
     fun stop() {
 
+        KRServer.onReceive(KRStop)
         SRServer.onReceive(SRStop)
         KBServer.onReceive(KBStop)
         ZKServer.onReceive(ZKStop)

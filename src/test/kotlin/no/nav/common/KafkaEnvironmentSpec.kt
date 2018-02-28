@@ -1,14 +1,14 @@
 package no.nav.common
 
+import com.github.kittinunf.fuel.httpGet
 import kafka.utils.ZkUtils
+import no.nav.common.embeddedkafkarest.KRServer
 import no.nav.common.embeddedzookeeper.ZKServer
-import org.amshove.kluent.`should be equal to`
-import org.amshove.kluent.`should contain all`
-import org.amshove.kluent.shouldEqualTo
-import org.amshove.kluent.shouldNotEqual
+import org.amshove.kluent.*
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import org.jetbrains.spek.api.dsl.xit
 
 object KafkaEnvironmentSpec : Spek({
 
@@ -149,6 +149,24 @@ object KafkaEnvironmentSpec : Spek({
 
             urls["broker"]?.split(",")?.size ?: 0 shouldEqualTo  2
 
+        }
+
+        xit("should report topics as requested via rest") {
+
+            // quick and raw http&json
+
+            (KRServer.getUrl() + "/topics")
+                    .httpGet()
+                    .responseString().third.component1() shouldEqual """["_schemas","test1","test2","test3","test4"]"""
+        }
+
+        xit("should report $b brokers via rest") {
+
+            // quick and raw http&json
+
+            (KRServer.getUrl() + "/brokers")
+                    .httpGet()
+                    .responseString().third.component1() shouldEqual """{"brokers":[0,1]}"""
         }
 
         afterGroup {
