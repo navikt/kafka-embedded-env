@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.kafka.common.utils.Time
 import scala.Option
 import java.io.File
+import java.io.IOException
 import java.util.*
 
 class KBServer private constructor(override val port: Int, id: Int, private val noPartitions: Int) : ServerBase() {
@@ -19,9 +20,17 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
 
     override val url = "PLAINTEXT://$host:$port"
 
-    private val logDir = File(System.getProperty("java.io.tmpdir"),"inmkafkabroker/ID$id").apply {
+    //TODO - need to find a better solution in order to do proper cleanup
+    private val logDir = File(
+            System.getProperty("java.io.tmpdir"),"inmkafkabroker/ID$id${UUID.randomUUID()}").apply {
         // in case of fatal failure and no deletion in previous run
-        FileUtils.deleteDirectory(this)
+        try {
+            FileUtils.deleteDirectory(this)
+        }
+        catch (e: IOException) {
+            // Different behaviour between Mac and Windows
+            // Catch whatever and do not care due to shutdown
+        }
     }
 
 /*    private var RUNNING_AS_BROKER = BrokerState().apply {
@@ -38,9 +47,15 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
     override fun start() = broker.startup()
 
     override fun stop() {
-        broker.shutdown()
-        broker.awaitShutdown()
-        FileUtils.deleteDirectory(logDir)
+        try {
+            broker.shutdown()
+            broker.awaitShutdown()
+            FileUtils.deleteDirectory(logDir)
+        }
+        catch(e: IOException) {
+            // Different behaviour between Mac and Windows
+            // Catch whatever and do not care due to shutdown
+        }
     }
 
     private fun getDefaultProps(id: Int) = Properties().apply {

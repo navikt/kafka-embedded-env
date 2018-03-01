@@ -32,7 +32,7 @@ class KRServer private constructor(override val port: Int) : ServerBase() {
             krServer.stop()
             krServer.join()
         }
-        catch (e: Exception) {
+        catch (e: NullPointerException) {
             // messy - current kafka server stop() throws null pointer exception...
             // do nothing - end of lifecycle for this rest server anyway
         }

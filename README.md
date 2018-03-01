@@ -1,3 +1,3 @@
 # kafka.embedded
 
-to be defined
+Internal testing ongoing
