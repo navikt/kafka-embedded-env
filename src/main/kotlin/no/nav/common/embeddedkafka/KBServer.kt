@@ -118,14 +118,14 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
             }
         }
 
-        // really not relevant
-        override fun getHost(): String = servers.firstOrNull()?.host ?: ""
+        // really not relevant - giving only for the eventual first server
+        override fun getHost() = servers.firstOrNull()?.host ?: ""
 
-        // really not relevant
-        override fun getPort(): Int = servers.firstOrNull()?.port ?: 0
+        // really not relevant - as above
+        override fun getPort() = servers.firstOrNull()?.port ?: 0
 
-        // relevant for embeddedkafka rest
-        override fun getUrl(): String = if (servers.isEmpty()) "" else
+        // Returning string as "PLAINTEXT://<host>:<port>,PLAINTEXT://<host>:<port>,.." as no of brokers
+        override fun getUrl() = if (servers.isEmpty()) "" else
             servers.map { it.url }.foldRight("",{ u, acc -> if (acc.isEmpty()) u else "$u,$acc" })
 
     }

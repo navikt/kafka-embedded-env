@@ -16,7 +16,7 @@ class SRServer private constructor(override val port: Int) : ServerBase() {
     private val scServer = SchemaRegistryRestApplication(
             Properties().apply {
                 set(SchemaRegistryConfig.LISTENERS_CONFIG, url)
-                set(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,"${ZKServer.getUrl()}")
+                set(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG,ZKServer.getUrl())
                 set(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG,"_schemas")
             }
     )
@@ -53,11 +53,11 @@ class SRServer private constructor(override val port: Int) : ServerBase() {
 
         }
 
-        override fun getHost(): String = servers.firstOrNull()?.host ?: ""
+        override fun getHost() = servers.firstOrNull()?.host ?: ""
 
-        override fun getPort(): Int = servers.firstOrNull()?.port ?: 0
+        override fun getPort() = servers.firstOrNull()?.port ?: 0
 
-        override fun getUrl(): String = servers.firstOrNull()?.url ?: ""
+        override fun getUrl() = servers.firstOrNull()?.url ?: ""
     }
 
 }

@@ -1,5 +1,8 @@
 package no.nav.common.embeddedutils
 
+/**
+ * An abstract class for a servers companion object, managing the server
+ */
 abstract class ServerActor<ServerBase> {
 
     protected val servers = mutableListOf<ServerBase>()

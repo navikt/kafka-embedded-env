@@ -70,10 +70,10 @@ class ZKServer private constructor(override val port: Int) : ServerBase() {
 
         }
 
-        override fun getHost(): String = servers.firstOrNull()?.host ?: ""
+        override fun getHost() = servers.firstOrNull()?.host ?: ""
 
-        override fun getPort(): Int = servers.firstOrNull()?.port ?: 0
+        override fun getPort() = servers.firstOrNull()?.port ?: 0
 
-        override fun getUrl(): String = servers.firstOrNull()?.url ?: ""
+        override fun getUrl() = servers.firstOrNull()?.url ?: ""
     }
 }

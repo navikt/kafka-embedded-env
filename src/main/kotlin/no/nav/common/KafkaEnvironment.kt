@@ -84,8 +84,6 @@ object KafkaEnvironment {
             val rackAwareDisabled = RackAwareMode.`Disabled$`()
 
             AdminUtils.createTopic(zkUtils, it, partitions, replicas, config, rackAwareDisabled)
-
-            //while (!AdminUtils.topicExists(zkUtils, it)) {} //Thread.sleep(250) //waiting...
         }
 
         zkUtils.close()

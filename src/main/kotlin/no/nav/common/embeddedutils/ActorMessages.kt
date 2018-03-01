@@ -1,5 +1,9 @@
 package no.nav.common.embeddedutils
 
+/**
+ * A list of commands to onReceive
+ */
+
 sealed class ServerMessages
 
 // zookeeper start/stop
