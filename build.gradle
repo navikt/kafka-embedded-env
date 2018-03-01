@@ -30,7 +30,7 @@ task packageJavadoc(type: Jar) {
 }
 
 group 'no.nav.common'
-version '0.8.2'
+version '0.5.2'
 
 sourceCompatibility = 1.8
 
@@ -90,7 +90,18 @@ publishing {
 
     repositories {
         maven {
-            url = uri("$buildDir/repository")
+            credentials {
+                username nexusUser
+                password nexusPassword
+            }
+            url nexusURL
         }
     }
+
+//    repositories {
+//        maven {
+//            url = uri("$buildDir/repository")
+//        }
+//    }
+
 }
