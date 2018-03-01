@@ -35,7 +35,7 @@ class SRServer private constructor(override val port: Int) : ServerBase() {
 
             when (msg) {
                 SRStart -> if (servers.isEmpty()) {
-                    SRServer(getAvailablePort()).run {
+                    SRServer(/*getAvailablePort()*/8081).run {
                         servers.add(this)
                         start()
                     }

@@ -52,7 +52,7 @@ class ZKServer private constructor(override val port: Int) : ServerBase() {
 
             when (msg) {
                 ZKStart -> if (servers.isEmpty()) {
-                        ZKServer(getAvailablePort()).run {
+                        ZKServer(/*getAvailablePort()*/2181).run {
                             servers.add(this)
                             start()
                         }

@@ -112,7 +112,7 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
                 is KBStart -> if (servers.isEmpty()) {
 
                     (0 until msg.noOfBrokers).forEach {
-                        KBServer(getAvailablePort(),it, msg.noOfBrokers).run {
+                        KBServer(/*getAvailablePort()*/9092 + it,it, msg.noOfBrokers).run {
                             servers.add(this)
                             start()
                         }

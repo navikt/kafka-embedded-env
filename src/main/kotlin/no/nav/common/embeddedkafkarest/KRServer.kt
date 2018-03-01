@@ -43,7 +43,7 @@ class KRServer private constructor(override val port: Int) : ServerBase() {
         override fun onReceive(msg: ServerMessages) {
             when (msg) {
                 KRStart -> if (servers.isEmpty()) {
-                    KRServer(getAvailablePort()).run {
+                    KRServer(/*getAvailablePort()*/8082).run {
                         servers.add(this)
                         start()
                     }
