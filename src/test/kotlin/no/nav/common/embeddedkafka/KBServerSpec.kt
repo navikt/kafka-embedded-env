@@ -1,109 +1,187 @@
 package no.nav.common.embeddedkafka
 
 import kafka.utils.ZkUtils
-import no.nav.common.embeddedutils.KBStart
-import no.nav.common.embeddedutils.KBStop
-import no.nav.common.embeddedutils.ZKStart
-import no.nav.common.embeddedutils.ZKStop
-import no.nav.common.embeddedzookeeper.ZKServer
-import org.amshove.kluent.`should be equal to`
+import no.nav.common.KafkaEnvironment
+import org.amshove.kluent.shouldEqualTo
 import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 
 object KBServerSpec : Spek({
 
+    val kEnv = KafkaEnvironment(2)
+
     val sessTimeout = 1500
     val connTimeout = 500
 
-    describe("active embeddedkafka cluster of one broker (start/stop)") {
+    describe("kafka broker tests") {
 
-        val b = 1
+        context("active embeddedkafka cluster of two broker") {
 
-        beforeGroup {
+            val b = 2
 
-            ZKServer.onReceive(ZKStart)
-            KBServer.onReceive(KBStart(b))
+            beforeGroup {
+                kEnv.start()
+            }
+
+            it("should have $b broker(s)") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo b
+
+            }
+
+            it("should not be any topics available") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allTopics.size()
+                    close()
+                    n
+                } shouldEqualTo 0
+            }
+
+            afterGroup {
+                // nothing here
+            }
         }
 
-        it("should have $b broker(s)") {
+        context("active embeddedkafka cluster of 1 stopped broker") {
 
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nBroker = allBrokersInCluster.size()
-                close()
-                nBroker
-            } `should be equal to` b
+            val b = 1
 
+            beforeGroup {
+                kEnv.serverPark.brokers[0].stop()
+
+            }
+
+            it("should have $b broker(s)") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo b
+
+            }
+
+            it("should not be any topics available") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allTopics.size()
+                    close()
+                    n
+                } shouldEqualTo 0
+            }
+
+            afterGroup {
+                // nothing here
+            }
         }
 
-        it("should not be any topics available") {
+        context("active embeddedkafka cluster of 1 restarted broker") {
 
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nTopics = allTopics.size()
-                close()
-                nTopics
-            } `should be equal to` 0
+            val b = 2
+
+            beforeGroup {
+                kEnv.serverPark.brokers[0].start()
+
+            }
+
+            it("should have $b broker(s)") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo b
+
+            }
+
+            it("should not be any topics available") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allTopics.size()
+                    close()
+                    n
+                } shouldEqualTo 0
+            }
+
+            afterGroup {
+                // nothing here
+            }
+        }
+
+        context("active embeddedkafka cluster of 2 stopped brokers") {
+
+            val b = 0
+
+            beforeGroup {
+                kEnv.serverPark.brokers.forEach { it.stop() }
+            }
+
+            it("should have $b broker(s)") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo b
+
+            }
+
+            it("should not be any topics available") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allTopics.size()
+                    close()
+                    n
+                } shouldEqualTo 0
+            }
+
+            afterGroup {
+                // nothing here
+            }
+        }
+
+        context("active embeddedkafka cluster of 2 restarted brokers") {
+
+            val b = 2
+
+            beforeGroup {
+                kEnv.serverPark.brokers.forEach { it.start() }
+            }
+
+            it("should have $b broker(s)") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo b
+
+            }
+
+            it("should not be any topics available") {
+
+                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allTopics.size()
+                    close()
+                    n
+                } shouldEqualTo 0
+            }
+
+            afterGroup {
+                // nothing here
+            }
         }
 
         afterGroup {
-
-            KBServer.onReceive(KBStop)
-            ZKServer.onReceive(ZKStop)
+            kEnv.tearDown()
         }
     }
 
-    describe("active embeddedkafka cluster of 2 brokers (start/stop) for 2nd time") {
-
-        val b = 2
-
-        beforeGroup {
-
-            ZKServer.onReceive(ZKStart)
-            KBServer.onReceive(KBStart(b))
-        }
-
-        it("should have $b broker(s)") {
-
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nBroker = allBrokersInCluster.size()
-                close()
-                nBroker
-            } `should be equal to` b
-
-        }
-
-        it("should not be any topics available") {
-
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nTopics = allTopics.size()
-                close()
-                nTopics
-            } `should be equal to` 0
-        }
-
-        afterGroup {
-
-            KBServer.onReceive(KBStop)
-            ZKServer.onReceive(ZKStop)
-        }
-    }
-
-    describe("inactive embeddedkafka cluster (no start/stop)") {
-
-        beforeGroup {  }
-
-        it("should return empty string as host") {
-            KBServer.getHost() `should be equal to` ""
-        }
-
-        it("should return 0 as port") {
-            KBServer.getPort() `should be equal to` 0
-        }
-
-        it("should return empty string as url") {
-            KBServer.getUrl() `should be equal to` ""
-        }
-
-        afterGroup {  }
-    }
 })

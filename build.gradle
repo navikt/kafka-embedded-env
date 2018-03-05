@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.21'
+    ext.kotlin_version = '1.2.30'
 
     repositories {
         mavenCentral()
@@ -10,8 +10,8 @@ buildscript {
 }
 
 plugins{
-    id "org.jetbrains.kotlin.jvm" version "1.2.21"
-    id 'org.junit.platform.gradle.plugin' version '1.0.1'
+    id "org.jetbrains.kotlin.jvm" version "1.2.30"
+    id 'org.junit.platform.gradle.plugin' version '1.1.0'
     id 'maven-publish'
 }
 
@@ -30,7 +30,7 @@ task packageJavadoc(type: Jar) {
 }
 
 group 'no.nav.common'
-version '0.5.3'
+version '0.6.0'
 sourceCompatibility = 1.8
 
 repositories {

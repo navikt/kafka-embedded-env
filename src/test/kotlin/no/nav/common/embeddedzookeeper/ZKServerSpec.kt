@@ -1,116 +1,82 @@
 package no.nav.common.embeddedzookeeper
 
-import no.nav.common.embeddedutils.ZKStart
-import no.nav.common.embeddedutils.ZKStop
-import org.amshove.kluent.`should be equal to`
+import no.nav.common.KafkaEnvironment
+import org.amshove.kluent.shouldBeEqualTo
 import org.apache.zookeeper.client.FourLetterWordMain
 import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 
 object ZKServerSpec : Spek({
 
-  describe("active embeddedzookeeper (start/stop)") {
+    val kEnv = KafkaEnvironment(0) // need only zookeeper
 
-      beforeGroup {
-          ZKServer.onReceive(ZKStart)
-      }
-
-      it("should be ok - command ruok with response imok") {
-
-          FourLetterWordMain.send4LetterWord(
-                  ZKServer.getHost(),
-                  ZKServer.getPort(),
-                  "ruok") `should be equal to` "imok\n"
-      }
-
-      it("should have no outstanding requests - command reqs with response empty string") {
-
-          FourLetterWordMain.send4LetterWord(
-                  ZKServer.getHost(),
-                  ZKServer.getPort(),
-                  "reqs") `should be equal to` ""
-      }
-
-      afterGroup {
-          ZKServer.onReceive(ZKStop)
-      }
-  }
-
-    describe("active embeddedzookeeper (start/stop for 2nd time) ") {
+    describe("zookeeper server tests") {
 
         beforeGroup {
-            ZKServer.onReceive(ZKStart)
+            // nothing here
         }
 
-        it("should be ok - command ruok with response imok") {
+        context("active embeddedzookeeper (start/stop)") {
 
-            FourLetterWordMain.send4LetterWord(
-                    ZKServer.getHost(),
-                    ZKServer.getPort(),
-                    "ruok") `should be equal to` "imok\n"
+            beforeGroup {
+                kEnv.start()
+            }
+
+            it("should be ok - command ruok with response imok") {
+
+                FourLetterWordMain.send4LetterWord(
+                        kEnv.serverPark.zookeeper.host,
+                        kEnv.serverPark.zookeeper.port,
+                        "ruok") shouldBeEqualTo "imok\n"
+            }
+
+            it("should have no outstanding requests - command reqs with response empty string") {
+
+                FourLetterWordMain.send4LetterWord(
+                        kEnv.serverPark.zookeeper.host,
+                        kEnv.serverPark.zookeeper.port,
+                        "reqs") shouldBeEqualTo ""
+            }
+
+            afterGroup {
+                kEnv.stop()
+            }
         }
 
-        it("should have no outstanding requests - command reqs with response empty string") {
+        context("active embeddedzookeeper (start/stop for 2nd time) ") {
 
-            FourLetterWordMain.send4LetterWord(
-                    ZKServer.getHost(),
-                    ZKServer.getPort(),
-                    "reqs") `should be equal to` ""
+            beforeGroup {
+                kEnv.start()
+            }
+
+            it("should be ok - command ruok with response imok") {
+
+                FourLetterWordMain.send4LetterWord(
+                        kEnv.serverPark.zookeeper.host,
+                        kEnv.serverPark.zookeeper.port,
+                        "ruok") shouldBeEqualTo "imok\n"
+
+            }
+
+            it("should have no outstanding requests - command reqs with response empty string") {
+
+                FourLetterWordMain.send4LetterWord(
+                        kEnv.serverPark.zookeeper.host,
+                        kEnv.serverPark.zookeeper.port,
+                        "reqs") shouldBeEqualTo ""
+
+            }
+
+            afterGroup {
+                kEnv.stop()
+            }
+
         }
 
         afterGroup {
-            ZKServer.onReceive(ZKStop)
-        }
-    }
-
-    describe("inactive embeddedzookeeper (no start/stop)") {
-
-        beforeGroup {  }
-
-        it("should return empty string as host") {
-            ZKServer.getHost() `should be equal to` ""
-        }
-
-        it("should return 0 as port") {
-            ZKServer.getPort() `should be equal to` 0
-        }
-
-        it("should return empty string as url") {
-            ZKServer.getUrl() `should be equal to` ""
-        }
-
-        afterGroup {  }
-    }
-
-    describe("active embeddedzookeeper with multiple (start/stop) ") {
-
-        beforeGroup {
-            ZKServer.onReceive(ZKStart)
-            ZKServer.onReceive(ZKStart)
-            ZKServer.onReceive(ZKStart)
-        }
-
-        it("should be ok - command ruok with response imok") {
-
-            FourLetterWordMain.send4LetterWord(
-                    ZKServer.getHost(),
-                    ZKServer.getPort(),
-                    "ruok") `should be equal to` "imok\n"
-        }
-
-        it("should have no outstanding requests - command reqs with response empty string") {
-
-            FourLetterWordMain.send4LetterWord(
-                    ZKServer.getHost(),
-                    ZKServer.getPort(),
-                    "reqs") `should be equal to` ""
-        }
-
-        afterGroup {
-            ZKServer.onReceive(ZKStop)
-            ZKServer.onReceive(ZKStop)
-            ZKServer.onReceive(ZKStop)
+            kEnv.tearDown()
         }
     }
 })

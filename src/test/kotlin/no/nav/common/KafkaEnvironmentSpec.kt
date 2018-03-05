@@ -2,176 +2,229 @@ package no.nav.common
 
 import com.github.kittinunf.fuel.httpGet
 import kafka.utils.ZkUtils
-import no.nav.common.embeddedkafkarest.KRServer
-import no.nav.common.embeddedzookeeper.ZKServer
 import org.amshove.kluent.*
+import org.apache.zookeeper.client.FourLetterWordMain
 import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.xit
 
 object KafkaEnvironmentSpec : Spek({
 
     val sessTimeout = 1500
     val connTimeout = 500
-    val srTopic = 1
-    var urls: Map<String, String> = emptyMap()
 
-    describe("active embeddedkafka env of one broker with none topics created") {
+    describe("kafka environment tests") {
 
-        val b = 1
-        val t = emptyList<String>()
+        context("default kafka environment") {
 
-        beforeGroup {
-            urls = KafkaEnvironment.start(b, t)
+            val keDefault = KafkaEnvironment()
+
+            val nBroker = 1
+            val nTopics = 0
+
+            beforeGroup {
+                keDefault.start()
+            }
+
+            it("should have 1 zookeeper") {
+
+                FourLetterWordMain.send4LetterWord(
+                        keDefault.serverPark.zookeeper.host,
+                        keDefault.serverPark.zookeeper.port,
+                        "ruok") shouldBeEqualTo "imok\n"
+
+            }
+
+            it("should have $nBroker broker") {
+
+                ZkUtils.apply(keDefault.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo nBroker
+            }
+
+            it("should have $nTopics topics available") {
+
+                ZkUtils.apply(keDefault.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
+                    val n = allTopics.size()
+                    close()
+                    n
+                } shouldEqualTo nTopics
+
+            }
+
+            afterGroup {
+                keDefault.tearDown()
+            }
         }
 
-        it("should have $b broker(s)") {
+        context("basic kafka environment") {
 
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nBroker = allBrokersInCluster.size()
-                close()
-                nBroker
-            } `should be equal to` b
+            val basicTopics = listOf("basic01","basic02")
+            val keBasic = KafkaEnvironment(topics = basicTopics)
 
+            val zku = keBasic.serverPark.zookeeper.url
+            val nBroker = 1
+
+            beforeGroup {
+                keBasic.start()
+            }
+
+            it("should have 1 zookeeper") {
+
+                FourLetterWordMain.send4LetterWord(
+                        keBasic.serverPark.zookeeper.host,
+                        keBasic.serverPark.zookeeper.port,
+                        "ruok") shouldBeEqualTo  "imok\n"
+
+            }
+
+            it("should have $nBroker broker") {
+
+                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo nBroker
+            }
+
+            it("should have ${basicTopics.size} topics available") {
+
+                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
+                    val n = allTopics.size()
+                    close()
+                    n
+                } shouldEqualTo basicTopics.size
+
+            }
+
+            it("should have topics as requested available") {
+
+                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
+                    val topics = allTopics
+                    val lTopics = mutableListOf<String>()
+
+                    topics.foreach { lTopics.add(it) }
+                    close()
+                    lTopics
+                } shouldContainAll basicTopics
+            }
+
+            afterGroup {
+                keBasic.tearDown()
+            }
         }
 
-        it("should only be schema reg topic available") {
+        context("strange_1 kafka environment") {
 
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nTopics = allTopics.size()
-                close()
-                nTopics
-            } `should be equal to` (t.size + srTopic)
+            val keStrange1 = KafkaEnvironment(-2)
+
+            val zku = keStrange1.serverPark.zookeeper.url
+            val nBroker = 0
+
+            beforeGroup {
+                keStrange1.start()
+            }
+
+            it("should have 1 zookeeper") {
+
+                FourLetterWordMain.send4LetterWord(
+                        keStrange1.serverPark.zookeeper.host,
+                        keStrange1.serverPark.zookeeper.port,
+                        "ruok") shouldBeEqualTo "imok\n"
+
+            }
+
+            it("should have $nBroker broker") {
+
+                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo nBroker
+            }
+
+            afterGroup {
+                keStrange1.tearDown()
+            }
         }
 
-        it("should have a schema reg url different from empty string") {
+        context("strange_2 kafka environment") {
 
-            urls["schema"] shouldNotEqual ""
-        }
+            val strange2Topics = listOf("strange201","strange202","strange203")
+            val keStrange2 = KafkaEnvironment(
+                    0,
+                    topics = strange2Topics,
+                    withRest = true)
 
-        it("should have a schema reg port different from 0") {
+            val zku = keStrange2.serverPark.zookeeper.url
+            val nBroker = 1
 
-            urls["schema"]?.split(":")?.last()?.toInt() ?: 0 shouldNotEqual 0
-        }
+            beforeGroup {
+                keStrange2.start()
+            }
 
-        afterGroup {
-            KafkaEnvironment.stop()
+            it("should have 1 zookeeper") {
+
+                FourLetterWordMain.send4LetterWord(
+                        keStrange2.serverPark.zookeeper.host,
+                        keStrange2.serverPark.zookeeper.port,
+                        "ruok") shouldBeEqualTo "imok\n"
+
+            }
+
+            it("should have $nBroker broker") {
+
+                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
+                    val n = allBrokersInCluster.size()
+                    close()
+                    n
+                } shouldEqualTo nBroker
+            }
+
+            // +1 is due to schema registry topic for schemas
+            it("should have ${strange2Topics.size + 1} topics available") {
+
+                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
+                    val n = allTopics.size()
+                    close()
+                    n
+                } shouldEqualTo (strange2Topics.size + 1)
+
+            }
+
+            it("should have topics as requested available") {
+
+                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
+                    val topics = allTopics
+                    val lTopics = mutableListOf<String>()
+
+                    topics.foreach { lTopics.add(it) }
+                    close()
+                    lTopics
+                } shouldContainAll strange2Topics
+            }
+
+            it("should have a schema registry") {
+
+                (keStrange2.serverPark.schemaregistry.url + "/config")
+                        .httpGet()
+                        .responseString().third.component1() shouldEqual """{"compatibilityLevel":"BACKWARD"}"""
+            }
+
+            it("should have a rest server") {
+
+                // quick and raw http&json
+                (keStrange2.serverPark.rest.url + "/brokers")
+                        .httpGet()
+                        .responseString().third.component1() shouldEqual """{"brokers":[0]}"""
+            }
+
+            afterGroup {
+                keStrange2.tearDown()
+            }
         }
     }
-
-    describe("active embeddedkafka env of 1 broker with topics created") {
-
-        val b = 1
-        val t = listOf("test1")
-
-        beforeGroup {
-            KafkaEnvironment.start(b, t)
-        }
-
-        it("should have $b broker(s)") {
-
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nBroker = allBrokersInCluster.size()
-                close()
-                nBroker
-            } `should be equal to` b
-
-        }
-
-        it("should be ${t.size} + schema reg topics available") {
-
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nTopics = allTopics.size()
-                close()
-                nTopics
-            } `should be equal to` (t.size + srTopic)
-        }
-
-        it("should have topics as requested available") {
-
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val topics = allTopics
-                val lTopics = mutableListOf<String>()
-
-                topics.foreach { lTopics.add(it) }
-                close()
-                lTopics
-            } `should contain all` t
-        }
-
-        afterGroup {
-            KafkaEnvironment.stop()
-        }
-    }
-
-    describe("active embeddedkafka env of 2 brokers with topics created") {
-
-        val b = 2
-        val t = listOf("test1","test2","test3","test4")
-
-        beforeGroup {
-            KafkaEnvironment.start(b, t)
-        }
-
-        it("should have $b broker(s)") {
-
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nBroker = allBrokersInCluster.size()
-                close()
-                nBroker
-            } `should be equal to` b
-
-        }
-
-        it("should be ${t.size} + schema reg topics available") {
-
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val nTopics = allTopics.size()
-                close()
-                nTopics
-            } `should be equal to` (t.size + srTopic)
-        }
-
-        it("should have topics as requested available") {
-
-            ZkUtils.apply(ZKServer.getUrl(), sessTimeout, connTimeout, false).run {
-                val topics = allTopics
-                val lTopics = mutableListOf<String>()
-
-                topics.foreach { lTopics.add(it) }
-                close()
-                lTopics
-            } `should contain all` t
-        }
-
-        it("should have $b broker urls") {
-
-            urls["broker"]?.split(",")?.size ?: 0 shouldEqualTo  2
-
-        }
-
-        xit("should report topics as requested via rest") {
-
-            // quick and raw http&json
-
-            (KRServer.getUrl() + "/topics")
-                    .httpGet()
-                    .responseString().third.component1() shouldEqual """["_schemas","test1","test2","test3","test4"]"""
-        }
-
-        xit("should report $b brokers via rest") {
-
-            // quick and raw http&json
-
-            (KRServer.getUrl() + "/brokers")
-                    .httpGet()
-                    .responseString().third.component1() shouldEqual """{"brokers":[0,1]}"""
-        }
-
-        afterGroup {
-            KafkaEnvironment.stop()
-        }
-    }
-
 })

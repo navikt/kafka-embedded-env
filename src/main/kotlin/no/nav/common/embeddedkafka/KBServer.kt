@@ -5,65 +5,61 @@ import kafka.server.KafkaConfig
 import kafka.server.KafkaServer
 import kafka.utils.VerifiableProperties
 import no.nav.common.embeddedutils.*
-import no.nav.common.embeddedzookeeper.ZKServer
-import org.apache.commons.io.FileUtils
 import org.apache.kafka.common.utils.Time
 import scala.Option
 import java.io.File
-import java.io.IOException
 import java.util.*
 
-class KBServer private constructor(override val port: Int, id: Int, private val noPartitions: Int) : ServerBase() {
+class KBServer(
+        override val port: Int,
+        id: Int,
+        noPartitions: Int,
+        logDir: File,
+        zkURL: String) : ServerBase() {
 
     // see link below for starting up a embeddedkafka broker
     // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
 
     override val url = "PLAINTEXT://$host:$port"
 
-    //TODO - need to find a better solution in order to do proper cleanup
-    private val logDir = File(
-            System.getProperty("java.io.tmpdir"),"inmkafkabroker/ID$id${UUID.randomUUID()}").apply {
-        // in case of fatal failure and no deletion in previous run
-        try {
-            FileUtils.deleteDirectory(this)
-        }
-        catch (e: IOException) {
-            // Different behaviour between Mac and Windows
-            // Catch whatever and do not care due to shutdown
-        }
-    }
-
-/*    private var RUNNING_AS_BROKER = BrokerState().apply {
-        newState(3)
-    }*/
-
     private val broker = KafkaServer(
-            KafkaConfig(getDefaultProps(id)),
+            KafkaConfig(getDefaultProps(id, zkURL, noPartitions, logDir)),
             Time.SYSTEM,
             Option.apply(""),
-            KafkaMetricsReporter.startReporters(VerifiableProperties(getDefaultProps(id)))
+            KafkaMetricsReporter.startReporters(
+                    VerifiableProperties(
+                            getDefaultProps(id, zkURL, noPartitions, logDir)
+                    )
+            )
     )
 
-    override fun start() = broker.startup()
-
-    override fun stop() {
-        try {
-            broker.shutdown()
-            broker.awaitShutdown()
-            FileUtils.deleteDirectory(logDir)
+    override fun start() = when (status) {
+        NotRunning -> {
+            broker.startup()
+            status = Running
         }
-        catch(e: IOException) {
-            // Different behaviour between Mac and Windows
-            // Catch whatever and do not care due to shutdown
-        }
+        else -> {}
     }
 
-    private fun getDefaultProps(id: Int) = Properties().apply {
+    override fun stop() = when (status) {
+        Running -> {
+            broker.shutdown()
+            broker.awaitShutdown()
+            status = NotRunning
+        }
+        else -> {}
+    }
+
+    private fun getDefaultProps(
+            id: Int,
+            zkURL: String,
+            noPartitions: Int,
+            logDir: File) = Properties().apply {
 
         // see link below for details - trying to make lean embedded embeddedkafka broker
         // https://kafka.apache.org/documentation/#brokerconfigs
 
-        set(KafkaConfig.ZkConnectProp(), ZKServer.getUrl())
+        set(KafkaConfig.ZkConnectProp(), zkURL)
         set(KafkaConfig.ZkConnectionTimeoutMsProp(), 500)
         set(KafkaConfig.ZkSessionTimeoutMsProp(), 30_000)
 
@@ -101,48 +97,4 @@ class KBServer private constructor(override val port: Int, id: Int, private val 
         set(KafkaConfig.ControlledShutdownMaxRetriesProp(), 1)
         set(KafkaConfig.ControlledShutdownRetryBackoffMsProp(), 500)
     }
-
-    companion object : ServerActor<KBServer>() {
-
-        //const val noOfBrokers = 2
-
-        override fun onReceive(msg: ServerMessages) {
-
-            when (msg) {
-                is KBStart -> if (servers.isEmpty()) {
-
-                    (0 until msg.noOfBrokers).forEach {
-                        KBServer(/*getAvailablePort()*/9092 + it,it, msg.noOfBrokers).run {
-                            servers.add(this)
-                            start()
-                        }
-                    }
-                }
-
-                KBStop -> if (!servers.isEmpty()) {
-
-                    servers.forEach {
-                        it.stop()
-                    }
-                    servers.removeAll { true }
-                }
-
-                else -> {
-                    // don't care about other messages
-                }
-            }
-        }
-
-        // really not relevant - giving only for the eventual first server
-        override fun getHost() = servers.firstOrNull()?.host ?: ""
-
-        // really not relevant - as above
-        override fun getPort() = servers.firstOrNull()?.port ?: 0
-
-        // Returning string as "PLAINTEXT://<host>:<port>,PLAINTEXT://<host>:<port>,.." as no of brokers
-        override fun getUrl() = if (servers.isEmpty()) "" else
-            servers.map { it.url }.foldRight("",{ u, acc -> if (acc.isEmpty()) u else "$u,$acc" })
-
-    }
-
 }
