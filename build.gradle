@@ -30,7 +30,8 @@ task packageJavadoc(type: Jar) {
 }
 
 group 'no.nav.common'
-version '0.6.0'
+version '0.6.2'
+
 sourceCompatibility = 1.8
 
 repositories {

@@ -73,7 +73,7 @@ class KBServer(
         // noPartitions is identical with no of brokers
         set(KafkaConfig.NumPartitionsProp(),noPartitions)
         set(KafkaConfig.DefaultReplicationFactorProp(), noPartitions)
-        set(KafkaConfig.MinInSyncReplicasProp(), noPartitions)
+        set(KafkaConfig.MinInSyncReplicasProp(), 1)
 
         set(KafkaConfig.OffsetsTopicPartitionsProp(), noPartitions) //50
         set(KafkaConfig.OffsetsTopicReplicationFactorProp(), noPartitions.toShort()) //3
