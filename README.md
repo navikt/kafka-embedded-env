@@ -1,7 +1,7 @@
-# kafka.embedded
+# kafka-embedded-env
 
-A simple API for creating an embedded kafka environment with the KafkaEnvironment class. 
-Based on confluent.io version 4 environment. 
+A simple API for creating an embedded Kafka environment with the KafkaEnvironment class, typically used for running integration tests. 
+Based on the Confluent Open Source Platform v4. 
 
 Instead of using the classic ports (2181,9092...) for each server, the class will get the required number of available port 
 and use those in configurations for each server. 
@@ -18,6 +18,16 @@ fun start() // start servers in correct order
 fun stop() // stop servers in correct order - session data are available
  
 fun tearDown() // when finished with the kafka environment, stops servers and remove session data                    
+```
+
+## Usage
+Add dependency (currently available through internal Nexus):
+
+#### Gradle
+```
+dependencies {
+    testImplementation "no.nav.common:embedded.kafka:0.6.0"
+}
 ```
 
 ## Examples
@@ -83,3 +93,7 @@ Each server (ServerBase) has a few relevant properties and start/stop functions.
 ``` 
 Thus, each server can be stopped and started independent of the kafka environment start/stop.
 In addition, a brokersURL property with all brokers, is available. 
+
+## Contact
+
+Create an issue here on the GitHub issue tracker. Pull requests are also welcome.
