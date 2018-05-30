@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.30'
+    ext.kotlin_version = '1.2.41'
 
     repositories {
         mavenCentral()
@@ -10,7 +10,7 @@ buildscript {
 }
 
 plugins{
-    id "org.jetbrains.kotlin.jvm" version "1.2.30"
+    id "org.jetbrains.kotlin.jvm" version "1.2.41"
     id 'org.junit.platform.gradle.plugin' version '1.1.0'
     id 'maven-publish'
 }
@@ -80,14 +80,13 @@ compileTestKotlin {
 }
 
 
-publishing {
+/*publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
             artifact packageJavadoc
         }
     }
-
     repositories {
         maven {
             credentials {
@@ -97,11 +96,9 @@ publishing {
             url nexusURL
         }
     }
-
-//    repositories {
-//        maven {
-//            url = uri("$buildDir/repository")
-//        }
-//    }
-
-}
+    repositories {
+        maven {
+            url = uri("$buildDir/repository")
+        }
+    }
+}*/
