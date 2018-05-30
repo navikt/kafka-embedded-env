@@ -1,4 +1,4 @@
-# kafka-embedded-env
+# kafka-embedded-env [![Build Status](https://travis-ci.org/navikt/kafka-embedded-env.svg?branch=master)](https://travis-ci.org/navikt/kafka-embedded-env)
 
 A simple API for creating an embedded Kafka environment with the KafkaEnvironment class, typically used for running integration tests. 
 Based on the Confluent Open Source Platform v4. 
