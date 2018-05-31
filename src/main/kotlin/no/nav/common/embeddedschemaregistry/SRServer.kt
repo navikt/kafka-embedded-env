@@ -2,8 +2,10 @@ package no.nav.common.embeddedschemaregistry
 
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication
-import no.nav.common.embeddedutils.*
-import java.util.*
+import no.nav.common.embeddedutils.ServerBase
+import no.nav.common.embeddedutils.NotRunning
+import no.nav.common.embeddedutils.Running
+import java.util.Properties
 
 class SRServer(override val port: Int, private val zkURL: String) : ServerBase() {
 

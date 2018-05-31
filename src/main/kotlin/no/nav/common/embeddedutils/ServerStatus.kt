@@ -6,6 +6,5 @@ package no.nav.common.embeddedutils
 
 sealed class ServerStatus
 
-object Running: ServerStatus()
-object NotRunning: ServerStatus()
-
+object Running : ServerStatus()
+object NotRunning : ServerStatus()

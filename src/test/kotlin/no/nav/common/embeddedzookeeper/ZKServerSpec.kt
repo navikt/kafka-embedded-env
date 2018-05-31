@@ -57,7 +57,6 @@ object ZKServerSpec : Spek({
                         kEnv.serverPark.zookeeper.host,
                         kEnv.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
-
             }
 
             it("should have no outstanding requests - command reqs with response empty string") {
@@ -66,13 +65,11 @@ object ZKServerSpec : Spek({
                         kEnv.serverPark.zookeeper.host,
                         kEnv.serverPark.zookeeper.port,
                         "reqs") shouldBeEqualTo ""
-
             }
 
             afterGroup {
                 kEnv.stop()
             }
-
         }
 
         afterGroup {

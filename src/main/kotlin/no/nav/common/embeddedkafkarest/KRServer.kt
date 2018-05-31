@@ -2,15 +2,18 @@ package no.nav.common.embeddedkafkarest
 
 import io.confluent.kafkarest.KafkaRestApplication
 import io.confluent.kafkarest.KafkaRestConfig
-import no.nav.common.embeddedutils.*
+import no.nav.common.embeddedutils.ServerBase
+import no.nav.common.embeddedutils.NotRunning
+import no.nav.common.embeddedutils.Running
 import java.lang.NullPointerException
-import java.util.*
+import java.util.Properties
 
 class KRServer(
-        override val port: Int,
-        private val zkURL: String,
-        private val kbURL: String,
-        private var srURL: String) : ServerBase() {
+    override val port: Int,
+    private val zkURL: String,
+    private val kbURL: String,
+    private var srURL: String
+) : ServerBase() {
 
     // see link below for starting up embeddedkafkarest
     // https://github.com/confluentinc/kafka-rest/blob/4.0.x/src/main/java/io/confluent/kafkarest/KafkaRestMain.java
@@ -26,7 +29,7 @@ class KRServer(
             set(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkURL)
             set(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kbURL)
             set(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, srURL)
-            set(KafkaRestConfig.PRODUCER_THREADS_CONFIG, 3) //5
+            set(KafkaRestConfig.PRODUCER_THREADS_CONFIG, 3) // 5
         })
     }
 
@@ -36,7 +39,7 @@ class KRServer(
         NotRunning -> {
             KRS(url, zkURL, kbURL, srURL).apply {
                 kr.add(this)
-                try{ krServer.start() } catch (e: NullPointerException) {/**/}
+                try { krServer.start() } catch (e: NullPointerException) { /**/ }
             }
             status = Running
         }
@@ -49,7 +52,7 @@ class KRServer(
                 try {
                     krServer.stop()
                     krServer.join()
-                } catch (e: NullPointerException) {/**/}
+                } catch (e: NullPointerException) { /**/ }
             }
             kr.removeAll { true }
             status = NotRunning

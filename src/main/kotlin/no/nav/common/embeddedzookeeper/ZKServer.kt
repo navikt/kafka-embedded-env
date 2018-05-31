@@ -1,6 +1,8 @@
 package no.nav.common.embeddedzookeeper
 
-import no.nav.common.embeddedutils.*
+import no.nav.common.embeddedutils.ServerBase
+import no.nav.common.embeddedutils.Running
+import no.nav.common.embeddedutils.NotRunning
 import org.apache.zookeeper.server.ServerCnxnFactory
 import org.apache.zookeeper.server.ServerConfig
 import org.apache.zookeeper.server.ZooKeeperServer
@@ -20,7 +22,7 @@ class ZKServer(override val port: Int, private val dataDir: File) : ServerBase()
         private val args = arrayOf(port.toString(), dataDir.absolutePath, "1000", "0")
         private val config = ServerConfig().apply { parse(args) }
 
-        //private val shutdownLatch = CountDownLatch(1) - cannot set shutDownHandler
+        // private val shutdownLatch = CountDownLatch(1) - cannot set shutDownHandler
 
         val txnLog = FileTxnSnapLog(File(config.dataLogDir), File(config.dataDir))
 
@@ -40,7 +42,7 @@ class ZKServer(override val port: Int, private val dataDir: File) : ServerBase()
 
     override fun start() = when (status) {
         NotRunning -> {
-            ZKS(port,dataDir).apply {
+            ZKS(port, dataDir).apply {
                 zk.add(this)
                 cnxnFactory.startup(zkServer)
             }

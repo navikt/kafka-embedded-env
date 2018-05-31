@@ -2,7 +2,10 @@ package no.nav.common
 
 import com.github.kittinunf.fuel.httpGet
 import kafka.utils.ZkUtils
-import org.amshove.kluent.*
+import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldEqualTo
+import org.amshove.kluent.shouldContainAll
+import org.amshove.kluent.shouldEqual
 import org.apache.zookeeper.client.FourLetterWordMain
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.context
@@ -33,7 +36,6 @@ object KafkaEnvironmentSpec : Spek({
                         keDefault.serverPark.zookeeper.host,
                         keDefault.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
-
             }
 
             it("should have $nBroker broker") {
@@ -52,7 +54,6 @@ object KafkaEnvironmentSpec : Spek({
                     close()
                     n
                 } shouldEqualTo nTopics
-
             }
 
             afterGroup {
@@ -62,7 +63,7 @@ object KafkaEnvironmentSpec : Spek({
 
         context("basic kafka environment") {
 
-            val basicTopics = listOf("basic01","basic02")
+            val basicTopics = listOf("basic01", "basic02")
             val keBasic = KafkaEnvironment(topics = basicTopics)
 
             val zku = keBasic.serverPark.zookeeper.url
@@ -77,8 +78,7 @@ object KafkaEnvironmentSpec : Spek({
                 FourLetterWordMain.send4LetterWord(
                         keBasic.serverPark.zookeeper.host,
                         keBasic.serverPark.zookeeper.port,
-                        "ruok") shouldBeEqualTo  "imok\n"
-
+                        "ruok") shouldBeEqualTo "imok\n"
             }
 
             it("should have $nBroker broker") {
@@ -97,7 +97,6 @@ object KafkaEnvironmentSpec : Spek({
                     close()
                     n
                 } shouldEqualTo basicTopics.size
-
             }
 
             it("should have topics as requested available") {
@@ -134,7 +133,6 @@ object KafkaEnvironmentSpec : Spek({
                         keStrange1.serverPark.zookeeper.host,
                         keStrange1.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
-
             }
 
             it("should have $nBroker broker") {
@@ -153,7 +151,7 @@ object KafkaEnvironmentSpec : Spek({
 
         context("strange_2 kafka environment") {
 
-            val strange2Topics = listOf("strange201","strange202","strange203")
+            val strange2Topics = listOf("strange201", "strange202", "strange203")
             val keStrange2 = KafkaEnvironment(
                     0,
                     topics = strange2Topics,
@@ -172,7 +170,6 @@ object KafkaEnvironmentSpec : Spek({
                         keStrange2.serverPark.zookeeper.host,
                         keStrange2.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
-
             }
 
             it("should have $nBroker broker") {
@@ -192,7 +189,6 @@ object KafkaEnvironmentSpec : Spek({
                     close()
                     n
                 } shouldEqualTo (strange2Topics.size + 1)
-
             }
 
             it("should have topics as requested available") {

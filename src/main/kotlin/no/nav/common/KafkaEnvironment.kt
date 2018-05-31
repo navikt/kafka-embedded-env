@@ -7,12 +7,15 @@ import kafka.utils.ZkUtils
 import no.nav.common.embeddedkafka.KBServer
 import no.nav.common.embeddedkafkarest.KRServer
 import no.nav.common.embeddedschemaregistry.SRServer
-import no.nav.common.embeddedutils.*
+import no.nav.common.embeddedutils.ServerBase
+import no.nav.common.embeddedutils.EmptyShellServer
+import no.nav.common.embeddedutils.getAvailablePort
 import no.nav.common.embeddedzookeeper.ZKServer
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.Properties
+import java.util.UUID
 
 /**
  * A in-memory kafka environment consisting of
@@ -32,11 +35,13 @@ import java.util.*
  * A [brokersURL] property is available, expedient when multiple brokers
  *
  */
-class KafkaEnvironment(private val noOfBrokers: Int = 1,
-                       val topics: List<String> = emptyList(),
-                       withSchemaRegistry: Boolean = false,
-                       withRest: Boolean = false,
-                       autoStart: Boolean = false) {
+class KafkaEnvironment(
+    private val noOfBrokers: Int = 1,
+    val topics: List<String> = emptyList(),
+    withSchemaRegistry: Boolean = false,
+    withRest: Boolean = false,
+    autoStart: Boolean = false
+) {
 
     /**
      * A server park of the configured kafka environment
@@ -44,10 +49,10 @@ class KafkaEnvironment(private val noOfBrokers: Int = 1,
      * and start/stop methods
      */
     data class ServerPark(
-            val zookeeper: ServerBase,
-            val brokers: List<ServerBase>,
-            val schemaregistry: ServerBase,
-            val rest: ServerBase
+        val zookeeper: ServerBase,
+        val brokers: List<ServerBase>,
+        val schemaregistry: ServerBase,
+        val rest: ServerBase
     )
 
     // in case of strange config
@@ -62,18 +67,18 @@ class KafkaEnvironment(private val noOfBrokers: Int = 1,
 
     private val zkDataDir = File(System.getProperty("java.io.tmpdir"), "inmzookeeper").apply {
         // in case of fatal failure and no deletion in previous run
-        try { FileUtils.deleteDirectory(this) } catch (e: IOException) {/* tried at least */}
+        try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
     }
 
-    private val kbLDirRoot =  File(System.getProperty("java.io.tmpdir"),"inmkafkabroker").apply {
+    private val kbLDirRoot = File(System.getProperty("java.io.tmpdir"), "inmkafkabroker").apply {
         // in case of fatal failure and no deletion in previous run
-        try { FileUtils.deleteDirectory(this) } catch (e: IOException) {/* tried at least */}
+        try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
     }
     private val kbLDirIter = (0 until reqNoOfBrokers).map {
-        File(System.getProperty("java.io.tmpdir"),"inmkafkabroker/ID$it${UUID.randomUUID()}")
+        File(System.getProperty("java.io.tmpdir"), "inmkafkabroker/ID$it${UUID.randomUUID()}")
     }.iterator()
 
-    //allocate enough available ports
+    // allocate enough available ports
     private val noOfPorts = 1 + reqNoOfBrokers +
             listOf((withSchemaRegistry || withRest), withRest).filter { it == true }.size
 
@@ -86,10 +91,10 @@ class KafkaEnvironment(private val noOfBrokers: Int = 1,
     init {
         val zk = ZKServer(portsIter.next(), zkDataDir)
         val kBrokers = (0 until reqNoOfBrokers).map {
-            KBServer(portsIter.next(),it, reqNoOfBrokers, kbLDirIter.next(), zk.url)
+            KBServer(portsIter.next(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url)
         }
         brokersURL = kBrokers.map { it.url }
-                .foldRight("",{ u, acc -> if (acc.isEmpty()) u else "$u,$acc" })
+                .foldRight("", { u, acc -> if (acc.isEmpty()) u else "$u,$acc" })
 
         val sr = if (withSchemaRegistry || withRest) SRServer(portsIter.next(), zk.url) else EmptyShellServer()
         val r = if (withRest) KRServer(portsIter.next(), zk.url, brokersURL, sr.url) else EmptyShellServer()
@@ -135,8 +140,8 @@ class KafkaEnvironment(private val noOfBrokers: Int = 1,
      */
     fun tearDown() {
         stop()
-        try { FileUtils.deleteDirectory(zkDataDir) } catch (e: IOException) {/* tried at least */}
-        try { FileUtils.deleteDirectory(kbLDirRoot) }catch (e: IOException) {/* tried at least */}
+        try { FileUtils.deleteDirectory(zkDataDir) } catch (e: IOException) { /* tried at least */ }
+        try { FileUtils.deleteDirectory(kbLDirRoot) } catch (e: IOException) { /* tried at least */ }
     }
 
     // see the following links for creating topic
@@ -157,7 +162,7 @@ class KafkaEnvironment(private val noOfBrokers: Int = 1,
         val connTimeout = 500
         val noPartitions = serverPark.brokers.size
 
-        val zkUtils =  ZkUtils.apply(serverPark.zookeeper.url, sessTimeout, connTimeout, false)
+        val zkUtils = ZkUtils.apply(serverPark.zookeeper.url, sessTimeout, connTimeout, false)
 
         topics.forEach {
 
@@ -167,9 +172,9 @@ class KafkaEnvironment(private val noOfBrokers: Int = 1,
                             "--create",
                             it,
                             "--if-not-exists",
-                            "--partitions",noPartitions.toString(),
-                            "--replication-factor",1.toString(),
-                            "--zookeeper",serverPark.zookeeper.url
+                            "--partitions", noPartitions.toString(),
+                            "--replication-factor", 1.toString(),
+                            "--zookeeper", serverPark.zookeeper.url
                     )
             )
             val config = Properties() // no advanced config of topic...

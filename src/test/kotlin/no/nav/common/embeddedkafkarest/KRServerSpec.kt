@@ -50,14 +50,14 @@ object KRServerSpec : Spek({
 
             it("should not report brokers - connection refused") {
 
-                val (_,_,result) = (kEnv.serverPark.rest.url + "/brokers").httpGet()
+                val (_, _, result) = (kEnv.serverPark.rest.url + "/brokers").httpGet()
                         .timeout(500)
                         .responseString()
 
                 when (result) {
-                    is Result.Failure -> true//result.error.message
-                    is Result.Success -> false //result.value
-                } shouldEqual true //"java.net.ConnectException: Connection refused (Connection refused)"
+                    is Result.Failure -> true // result.error.message
+                    is Result.Success -> false // result.value
+                } shouldEqual true // "java.net.ConnectException: Connection refused (Connection refused)"
             }
         }
 

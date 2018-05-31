@@ -44,16 +44,15 @@ object SRServerSpec : Spek({
 
             it("should not report config - connection refused") {
 
-                val (_,_,result) = (kEnv.serverPark.schemaregistry.url + "/config").httpGet()
+                val (_, _, result) = (kEnv.serverPark.schemaregistry.url + "/config").httpGet()
                         .timeout(500)
                         .responseString()
 
                 when (result) {
-                    is Result.Failure -> true //result.error.message
-                    is Result.Success -> false//result.value
-                } shouldEqual true//"java.net.ConnectException: Connection refused (Connection refused)"
+                    is Result.Failure -> true // result.error.message
+                    is Result.Success -> false // result.value
+                } shouldEqual true // "java.net.ConnectException: Connection refused (Connection refused)"
             }
-
         }
 
         context("active embeddedkafka cluster with restarted schema reg") {

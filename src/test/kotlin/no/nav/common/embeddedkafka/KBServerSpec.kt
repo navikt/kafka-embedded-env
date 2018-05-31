@@ -32,7 +32,6 @@ object KBServerSpec : Spek({
                     close()
                     n
                 } shouldEqualTo b
-
             }
 
             it("should not be any topics available") {
@@ -55,7 +54,6 @@ object KBServerSpec : Spek({
 
             beforeGroup {
                 kEnv.serverPark.brokers[0].stop()
-
             }
 
             it("should have $b broker(s)") {
@@ -65,7 +63,6 @@ object KBServerSpec : Spek({
                     close()
                     n
                 } shouldEqualTo b
-
             }
 
             it("should not be any topics available") {
@@ -88,7 +85,6 @@ object KBServerSpec : Spek({
 
             beforeGroup {
                 kEnv.serverPark.brokers[0].start()
-
             }
 
             it("should have $b broker(s)") {
@@ -98,7 +94,6 @@ object KBServerSpec : Spek({
                     close()
                     n
                 } shouldEqualTo b
-
             }
 
             it("should not be any topics available") {
@@ -130,7 +125,6 @@ object KBServerSpec : Spek({
                     close()
                     n
                 } shouldEqualTo b
-
             }
 
             it("should not be any topics available") {
@@ -162,7 +156,6 @@ object KBServerSpec : Spek({
                     close()
                     n
                 } shouldEqualTo b
-
             }
 
             it("should not be any topics available") {
@@ -183,5 +176,4 @@ object KBServerSpec : Spek({
             kEnv.tearDown()
         }
     }
-
 })
