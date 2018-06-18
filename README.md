@@ -29,7 +29,7 @@ Add dependency (currently only available through internal Nexus):
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav.common:kafka-embedded-env:0.7.0"
+    testImplementation "no.nav.common:kafka-embedded-env:0.7.1"
 }
 ```
 

@@ -5,7 +5,6 @@ import io.confluent.kafkarest.KafkaRestConfig
 import no.nav.common.embeddedutils.ServerBase
 import no.nav.common.embeddedutils.NotRunning
 import no.nav.common.embeddedutils.Running
-import java.lang.NullPointerException
 import java.util.Properties
 
 class KRServer(
@@ -23,14 +22,14 @@ class KRServer(
     // not possible to restart rest at this level, use inner core class
     private class KRS(url: String, zkURL: String, kbURL: String, srURL: String) {
 
-        val krServer = KafkaRestApplication(Properties().apply {
+        val krServer = KafkaRestApplication(KafkaRestConfig(Properties().apply {
             set(KafkaRestConfig.ID_CONFIG, "EMBREST")
             set(KafkaRestConfig.LISTENERS_CONFIG, url)
             set(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkURL)
             set(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kbURL)
             set(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, srURL)
             set(KafkaRestConfig.PRODUCER_THREADS_CONFIG, 3) // 5
-        })
+        }))
     }
 
     private val kr = mutableListOf<KRS>()
@@ -39,7 +38,7 @@ class KRServer(
         NotRunning -> {
             KRS(url, zkURL, kbURL, srURL).apply {
                 kr.add(this)
-                try { krServer.start() } catch (e: NullPointerException) { /**/ }
+                krServer.start()
             }
             status = Running
         }
@@ -49,10 +48,8 @@ class KRServer(
     override fun stop() = when (status) {
         Running -> {
             kr.first().apply {
-                try {
-                    krServer.stop()
-                    krServer.join()
-                } catch (e: NullPointerException) { /**/ }
+                krServer.stop()
+                krServer.join()
             }
             kr.removeAll { true }
             status = NotRunning
