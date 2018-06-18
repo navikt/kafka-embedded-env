@@ -1,17 +1,20 @@
 # kafka-embedded-env [![Build Status](https://travis-ci.org/navikt/kafka-embedded-env.svg?branch=master)](https://travis-ci.org/navikt/kafka-embedded-env)
 
 A simple API for creating an embedded Kafka environment with the KafkaEnvironment class, typically used for running integration tests. 
-Based on the Confluent Open Source Platform v4. 
 
-Instead of using the classic ports (2181,9092...) for each server, the class will get the required number of available port 
+Based on the Confluent Open Source Platform v4.1.1. 
+
+Instead of using the classic ports (2181, 9092, ...) for each server, the class will get the required number of available ports 
 and use those in configurations for each server. 
 
 ```kotlin
-class KafkaEnvironment(val noOfBrokers: Int = 1,
-                       val topics: List<String> = emptyList(),
-                       withSchemaRegistry: Boolean = false,
-                       withRest: Boolean = false,
-                       autoStart: Boolean = false)...
+class KafkaEnvironment(
+    val noOfBrokers: Int = 1,
+    val topics: List<String> = emptyList(),
+    withSchemaRegistry: Boolean = false,
+    withRest: Boolean = false,
+    autoStart: Boolean = false
+)
   
 fun start() // start servers in correct order
  
@@ -21,48 +24,48 @@ fun tearDown() // when finished with the kafka environment, stops servers and re
 ```
 
 ## Usage
-Add dependency (currently available through internal Nexus):
+Add dependency (currently only available through internal Nexus):
 
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav.common:embedded.kafka:0.6.0"
+    testImplementation "no.nav.common:kafka-embedded-env:0.7.0"
 }
 ```
+
+**Note**: You _must_ use the Confluent version matching this library - currently v4.1.1
+(i.e. Kafka v1.1.0)
 
 ## Examples
 ### Default
 ```kotlin
-val keDefault = KafkaEnvironment()
+val kafkaEnv = KafkaEnvironment()
  
-keDefault.start()
-  
-// whatever use scenario
- 
-keDefault.tearDown()
+kafkaEnv.start()
+... // do something
+kafkaEnv.tearDown()
 ```
 
 The default settings gives
 * 1 zookeeper
 * 1 broker
 
-### Enhanced
+### Custom
 ```kotlin
-val keEnhanced = KafkaEnvironment(
-                    noOfBrokers = 3,
-                    topics = listOf("test1","test2","test3"),
-                    withRest = true,
-                    autoStart = true)
-  
-// whatever use scenario
- 
-keEnhanced.tearDown()
+val kafkaEnv = KafkaEnvironment(
+    noOfBrokers = 3,
+    topics = listOf("test1", "test2", "test3"),
+    withRest = true,
+    autoStart = true
+)
+... // do something
+kafkaEnv.tearDown()
 ```
-Enhanced configuration gives 
-* 1 zookeeper
-* 3 brokers
-* 1 schema registry (due to use of kafka rest)
-* 1 kafka rest
+The above custom configuration gives 
+* 1 Zookeeper instance
+* 3 Kafka brokers
+* 1 Schema Registry instance (automatically started if Kafka REST is enabled)
+* 1 Kafka REST instance
 
 Given topics are automatically created and all servers are started in correct order - ready to use.
 Each topic will have number of partitions equal to number of brokers.
@@ -97,3 +100,5 @@ In addition, a brokersURL property with all brokers, is available.
 ## Contact
 
 Create an issue here on the GitHub issue tracker. Pull requests are also welcome.
+
+Internal resources may reach us on Slack in the #kafka channel.
