@@ -94,7 +94,7 @@ class KafkaEnvironment(
             KBServer(portsIter.next(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url)
         }
         brokersURL = kBrokers.map { it.url }
-                .foldRight("", { u, acc -> if (acc.isEmpty()) u else "$u,$acc" })
+                .foldRight("") { u, acc -> if (acc.isEmpty()) u else "$u,$acc" }
 
         val sr = if (withSchemaRegistry || withRest) SRServer(portsIter.next(), zk.url) else EmptyShellServer()
         val r = if (withRest) KRServer(portsIter.next(), zk.url, brokersURL, sr.url) else EmptyShellServer()
