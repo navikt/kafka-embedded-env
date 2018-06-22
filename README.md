@@ -2,7 +2,7 @@
 
 A simple API for creating an embedded Kafka environment with the KafkaEnvironment class, typically used for running integration tests. 
 
-Based on the Confluent Open Source Platform v4.1.1. 
+Based on the [Confluent Open Source distribution](https://www.confluent.io/product/confluent-open-source/) v4.1.1. 
 
 Instead of using the classic ports (2181, 9092, ...) for each server, the class will get the required number of available ports 
 and use those in configurations for each server. 
@@ -23,18 +23,28 @@ fun stop() // stop servers in correct order - session data are available
 fun tearDown() // when finished with the kafka environment, stops servers and remove session data                    
 ```
 
-## Usage
-Add dependency (currently only available through internal Nexus):
+## Getting Started
+Add the dependency:
 
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav.common:kafka-embedded-env:0.7.1"
+    testImplementation "no.nav.common:kafka-embedded-env:1.0.0"
 }
 ```
 
-**Note**: You _must_ use the Confluent version matching this library - currently v4.1.1
-(i.e. Kafka v1.1.0)
+#### Maven
+```
+<dependency>
+    <groupId>no.nav.common</groupId>
+    <artifactId>kafka-embedded-env</artifactId>
+    <version>1.0.0</version>
+    <scope>test</scope>
+</dependency>
+```
+
+**Note**: It is recommended that you use the Confluent version matching this library - currently v4.1.1
+(i.e. Kafka v1.1.x, though it is likely that Confluent v4.0.x/Kafka v1.0.x will also work)
 
 ## Examples
 ### Default
@@ -42,7 +52,7 @@ dependencies {
 val kafkaEnv = KafkaEnvironment()
  
 kafkaEnv.start()
-... // do something
+// do stuff
 kafkaEnv.tearDown()
 ```
 
@@ -58,7 +68,7 @@ val kafkaEnv = KafkaEnvironment(
     withRest = true,
     autoStart = true
 )
-... // do something
+// do stuff
 kafkaEnv.tearDown()
 ```
 The above custom configuration gives 
@@ -75,27 +85,29 @@ An instance of KafkaEnvironment has a serverPark (ServerPark) property, giving a
 Each server (ServerBase) has a few relevant properties and start/stop functions. 
 
 ```kotlin
-    data class ServerPark(
-            val zookeeper: ServerBase,
-            val brokers: List<ServerBase>,
-            val schemaregistry: ServerBase,
-            val rest: ServerBase)
-    ...        
-    abstract class ServerBase {
-        protected var status: ServerStatus = NotRunning
-    
-        open val host: String = "localhost"
-        abstract val port: Int
-        abstract val url: String
-    
-        abstract fun start()
-        abstract fun stop()
-    }
-    ...
-    val brokersURL: String
+data class ServerPark(
+    val zookeeper: ServerBase,
+    val brokers: List<ServerBase>,
+    val schemaregistry: ServerBase,
+    val rest: ServerBase
+)
+...        
+abstract class ServerBase {
+    protected var status: ServerStatus = NotRunning
+
+    open val host: String = "localhost"
+    abstract val port: Int
+    abstract val url: String
+
+    abstract fun start()
+    abstract fun stop()
+}
+...
+val brokersURL: String
 ``` 
-Thus, each server can be stopped and started independent of the kafka environment start/stop.
-In addition, a brokersURL property with all brokers, is available. 
+Thus each server can be stopped and started independently.
+
+The `brokersURL` property provides a comma-separated string of the running brokers' addresses.
 
 ## Contact
 
