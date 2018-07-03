@@ -5,7 +5,12 @@ before_install:
 - chmod +x gradlew
 - chmod +x gradle/wrapper/gradle-wrapper.jar
 script:
-- "./gradlew test build"
+- ./gradlew test build
+deploy:
+  provider: script
+  script: ./travis/deploy.sh
+  on:
+    branch: master
 notifications:
   slack:
     secure: xarIqgqwazZl5wpwxKtgwcPTGWirNhTDpDiNwmnyxdtMD9tw38XySjifuFSCXJApF57dKlxiVT4K//AY8jBsLsSB/stng4nOg6fuEP/ZxDY5/C80CFHXltSYjDL1zDBBECw9gugOAvmMePGpRXY9Jm9sZgku7PYv+VA6FCOb2BnqELsxN7Hj/3Z9w67uosh5ytJ8sQ9aN6eAcnl4ST3O7cOH5zfiS4yzufAZ1oZjLkkXwSuPl5YN3rLusQVcjnKXg+fQ5qBfrtxM1+TRe0H8DQUfU+SiKF+QbvNx/XPQFIwlcVZ3o9KJ7AV9ANn5qmypx+u0UMOTPSshq3lE3GkNCWVuDLZ2Fm2XiFH8xxhPQpHLY77z7y+Yy6JSrRBtkBtlMksi3ghgCe7tJ/CXx/af2FPyHTaVSVXLJn7EhHsWxfCyrcMvaV0LqJNkfVeFveoHTSdh2+FSsSH8euI20QwlnVHY3jf+FtafZ5CxLkolFNX+QdHVMJj/h0iJxSiZl7cCu8KLuD/pezEH5a3hPzknkhcEF6EOvj2KvCWdQbcuo7eY0ORcDoaZN9CrFblh75FxQfyCKkRUvz0m+iiy6YNYWN6DpArie1YljX1HkBZypg172l05Ejxg4Dy9RjSJJcIVJb1z15OANIZ2+1/eHKBQWdWJfoAoFHUIfI2KCy5zYg4=

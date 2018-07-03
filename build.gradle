@@ -14,9 +14,11 @@ buildscript {
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.2.50"
     id 'maven-publish'
-    id 'org.jmailen.kotlinter' version '1.12.0'
-    id 'com.github.ben-manes.versions' version '0.19.0'
+    id 'org.jmailen.kotlinter' version '1.13.0'
+    id 'com.github.ben-manes.versions' version '0.20.0'
     id "org.jetbrains.dokka" version "0.9.17"
+    id 'signing'
+    id 'io.codearte.nexus-staging' version '0.11.0'
 }
 
 dokka {
@@ -24,9 +26,14 @@ dokka {
     outputDirectory = "$buildDir/javadoc"
 }
 
-task packageJavadoc(type: Jar) {
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier 'sources'
+}
+
+task javadocJar(type: Jar) {
     from dokka
-    classifier = 'javadoc'
+    classifier 'javadoc'
 }
 
 test {
@@ -35,8 +42,8 @@ test {
     }
 }
 
-group 'no.nav.common'
-version '0.7.1'
+group 'no.nav'
+version '1.0.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
@@ -59,8 +66,12 @@ dependencies {
     implementation "com.unboundid:unboundid-ldapsdk:$unboundid_version"
     implementation "org.apache.kafka:kafka_2.12:$kafka_version"
     implementation "org.apache.commons:commons-io:$commons_version"
-    implementation "io.confluent:kafka-schema-registry:$confluent_version"
-    implementation "io.confluent:kafka-rest:$confluent_version"
+    implementation ("io.confluent:kafka-schema-registry:$confluent_version") {
+        exclude group: 'org.apache.kafka'
+    }
+    implementation ("io.confluent:kafka-rest:$confluent_version") {
+        exclude group: 'org.apache.kafka'
+    }
     testImplementation "org.amshove.kluent:kluent:$kluent_version"
     testImplementation "org.jetbrains.spek:spek-api:$spek_version"
     testRuntime "org.jetbrains.spek:spek-junit-platform-engine:$spek_version"
@@ -76,25 +87,59 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-/*publishing {
+publishing {
     publications {
         mavenJava(MavenPublication) {
+            artifactId 'kafka-embedded-env'
             from components.java
-            artifact packageJavadoc
+            artifact sourcesJar
+            artifact javadocJar
+            pom {
+                name = 'kafka-embedded-env'
+                description = 'Simple API for running a Kafka/Confluent environment locally'
+                url = 'https://github.com/navikt/kafka-embedded-env'
+                withXml {
+                    asNode().appendNode('packaging', 'jar')
+                }
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        organization = "NAV (Arbeids- og velferdsdirektoratet) - The Norwegian Labour and Welfare Administration"
+                        organizationUrl = "https://www.nav.no"
+                    }
+                }
+                scm {
+                    connection = "scm:git:git://github.com/navikt/kafka-embedded-env.git"
+                    developerConnection = "scm:git:git://github.com/navikt/kafka-embedded-env.git"
+                    url = "https://github.com/navikt/kafka-embedded-env"
+                }
+            }
         }
     }
     repositories {
         maven {
             credentials {
-                username nexusUser
-                password nexusPassword
+                username ossrhUsername
+                password ossrhPassword
             }
-            url "https://repo.adeo.no/repository/maven-${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases'}/"
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
         }
     }
-    repositories {
-        maven {
-            url = uri("$buildDir/repository")
-        }
-    }
-}*/
+}
+
+signing {
+    sign publishing.publications.mavenJava
+}
+
+nexusStaging {
+    username = ossrhUsername
+    password = ossrhPassword
+    packageGroup = 'no.nav'
+}
