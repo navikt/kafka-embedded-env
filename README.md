@@ -36,7 +36,7 @@ dependencies {
 #### Maven
 ```
 <dependency>
-    <groupId>no.nav.common</groupId>
+    <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
     <version>1.0.0</version>
     <scope>test</scope>
