@@ -29,7 +29,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav.common:kafka-embedded-env:1.0.0"
+    testImplementation "no.nav:kafka-embedded-env:1.0.0"
 }
 ```
 
@@ -57,8 +57,8 @@ kafkaEnv.tearDown()
 ```
 
 The default settings gives
-* 1 zookeeper
-* 1 broker
+* 1 Zookeeper
+* 1 Kafka broker
 
 ### Custom
 ```kotlin
