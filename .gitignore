@@ -12,3 +12,6 @@ log/
 target/
 .gradle/
 out/
+
+# Travis
+travis/codesigning.asc
