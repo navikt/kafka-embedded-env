@@ -128,8 +128,8 @@ publishing {
     repositories {
         maven {
             credentials {
-                username ossrhUsername
-                password ossrhPassword
+                username findProperty("ossrhUsername")
+                password findProperty("ossrhPassword")
             }
             def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
             def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
@@ -143,7 +143,7 @@ signing {
 }
 
 nexusStaging {
-    username = ossrhUsername
-    password = ossrhPassword
+    username = findProperty("ossrhUsername")
+    password = findProperty("ossrhPassword")
     packageGroup = 'no.nav'
 }
