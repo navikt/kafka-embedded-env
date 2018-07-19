@@ -1,11 +1,6 @@
 language: java
 jdk:
 - oraclejdk8
-before_install:
-- openssl aes-256-cbc -K $encrypted_a4e132a4b597_key -iv $encrypted_a4e132a4b597_iv
-  -in travis/codesigning.asc.enc -out travis/codesigning.asc -d
-- chmod +x gradlew
-- chmod +x gradle/wrapper/gradle-wrapper.jar
 script:
 - "./gradlew test build"
 deploy:
