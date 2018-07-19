@@ -139,7 +139,7 @@ publishing {
 }
 
 signing {
-    //useGpgCmd()
+    useGpgCmd()
     sign publishing.publications.mavenJava
 }
 
