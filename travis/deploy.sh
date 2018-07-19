@@ -3,5 +3,5 @@ if [ "$TRAVIS_BRANCH" = 'master' ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ]; the
     openssl aes-256-cbc -K $encrypted_a4e132a4b597_key -iv $encrypted_a4e132a4b597_iv \
         -in travis/codesigning.asc.enc -out travis/codesigning.asc -d
     gpg --fast-import travis/codesigning.asc
-  ./gradlew publish closeAndReleaseRepository -PossrhUsername=${OSSRH_JIRA_USERNAME} -PossrhPassword=${OSSRH_JIRA_PASSWORD} -Dsigning.gnupg.passphrase="$GPG_PASSPHRASE" -Dsigning.gpg.keyName="$GPG_KEY_NAME"
+  ./gradlew publish closeAndReleaseRepository -PossrhUsername=${OSSRH_JIRA_USERNAME} -PossrhPassword=${OSSRH_JIRA_PASSWORD} -Psigning.gnupg.passphrase="$GPG_PASSPHRASE" -Psigning.gpg.keyName="$GPG_KEY_NAME"
 fi
