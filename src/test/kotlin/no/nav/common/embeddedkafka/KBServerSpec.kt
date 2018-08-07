@@ -99,6 +99,7 @@ object KBServerSpec : Spek({
         }
 
         afterGroup {
+            adminClient.close()
             kEnv.tearDown()
         }
     }
