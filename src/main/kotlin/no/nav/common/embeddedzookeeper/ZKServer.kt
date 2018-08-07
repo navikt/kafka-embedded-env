@@ -11,8 +11,8 @@ import java.io.File
 
 class ZKServer(override val port: Int, private val dataDir: File) : ServerBase() {
 
-    // see link below for starting up embeddedzookeeper...
-    // https://github.com/apache/zookeeper/blob/e0af6ed7598fc4555d7625ddc8efd86e2281babf/src/java/main/org/apache/zookeeper/server/ZooKeeperServerMain.java
+    // see link for ZooKeeperServerMain below for starting up embeddedzookeeper
+    // https://github.com/apache/zookeeper/blob/branch-3.4.13/src/java/main/org/apache/zookeeper/server/ZooKeeperServerMain.java
 
     override val url = "$host:$port"
 
@@ -22,12 +22,10 @@ class ZKServer(override val port: Int, private val dataDir: File) : ServerBase()
         private val args = arrayOf(port.toString(), dataDir.absolutePath, "1000", "0")
         private val config = ServerConfig().apply { parse(args) }
 
-        // private val shutdownLatch = CountDownLatch(1) - cannot set shutDownHandler
-
-        val txnLog = FileTxnSnapLog(File(config.dataLogDir), File(config.dataDir))
-
         val zkServer = ZooKeeperServer().apply {
-            txnLogFactory = txnLog
+
+            // private val shutdownLatch = CountDownLatch(1) - cannot set shutDownHandler for this instance
+            txnLogFactory = FileTxnSnapLog(File(config.dataLogDir), File(config.dataDir))
             tickTime = config.tickTime
             minSessionTimeout = config.minSessionTimeout
             maxSessionTimeout = config.maxSessionTimeout
@@ -56,7 +54,7 @@ class ZKServer(override val port: Int, private val dataDir: File) : ServerBase()
             zk.first().apply {
                 cnxnFactory.shutdown() // includes shut down of embeddedzookeeper server
                 cnxnFactory.join()
-                txnLog.close()
+                zkServer.txnLogFactory.close()
             }
             zk.removeAll { true }
             status = NotRunning

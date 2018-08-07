@@ -20,8 +20,8 @@ class KBServer(
     zkURL: String
 ) : ServerBase() {
 
-    // see link below for starting up a embeddedkafka broker
-    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
+    // see link for KafkaServerStartable below for starting up an embedded kafka broker
+    // https://github.com/apache/kafka/blob/2.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
 
     override val url = "PLAINTEXT://$host:$port"
 
