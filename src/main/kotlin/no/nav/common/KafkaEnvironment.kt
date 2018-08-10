@@ -1,9 +1,6 @@
 package no.nav.common
 
-import kafka.admin.AdminUtils
-import kafka.admin.RackAwareMode
-import kafka.admin.TopicCommand
-import kafka.utils.ZkUtils
+import mu.KotlinLogging
 import no.nav.common.embeddedkafka.KBServer
 import no.nav.common.embeddedkafkarest.KRServer
 import no.nav.common.embeddedschemaregistry.SRServer
@@ -12,6 +9,9 @@ import no.nav.common.embeddedutils.EmptyShellServer
 import no.nav.common.embeddedutils.getAvailablePort
 import no.nav.common.embeddedzookeeper.ZKServer
 import org.apache.commons.io.FileUtils
+import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.clients.admin.NewTopic
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import java.io.File
 import java.io.IOException
 import java.util.Properties
@@ -96,20 +96,12 @@ class KafkaEnvironment(
         brokersURL = kBrokers.map { it.url }
                 .foldRight("") { u, acc -> if (acc.isEmpty()) u else "$u,$acc" }
 
-        val sr = if (withSchemaRegistry || withRest) SRServer(portsIter.next(), zk.url) else EmptyShellServer()
+        val sr = if (withSchemaRegistry || withRest) SRServer(portsIter.next(), zk.url, brokersURL) else EmptyShellServer()
         val r = if (withRest) KRServer(portsIter.next(), zk.url, brokersURL, sr.url) else EmptyShellServer()
 
         serverPark = ServerPark(zk, kBrokers, sr, r)
 
-        if (autoStart) {
-            serverPark.apply {
-                zookeeper.start()
-                brokers.forEach { it.start() }
-                schemaregistry.start()
-                rest.start()
-            }
-            createTopics(topics)
-        }
+        if (autoStart) start()
     }
 
     /**
@@ -117,9 +109,13 @@ class KafkaEnvironment(
      */
     fun start() {
         serverPark.apply {
+            log.info { "Starting zookeeper - ${zookeeper.url}" }
             zookeeper.start()
+            log.info { "Eventually starting kafka broker(s) - $brokersURL" }
             brokers.forEach { it.start() }
+            log.info { "Eventually  starting schema registry - ${schemaregistry.url}" }
             schemaregistry.start()
+            log.info { "Eventually starting rest server - ${rest.url}" }
             rest.start()
         }
         createTopics(topics)
@@ -129,9 +125,13 @@ class KafkaEnvironment(
      * Stop the kafka environment
      */
     fun stop() = serverPark.apply {
+        log.info { "Eventually stopping rest server" }
         rest.stop()
+        log.info { "Eventually stopping schema registry" }
         schemaregistry.stop()
+        log.info { "Eventually stopping kafka broker(s)" }
         brokers.forEach { it.stop() }
+        log.info { "Stopping zookeeper" }
         zookeeper.stop()
     }
 
@@ -144,10 +144,8 @@ class KafkaEnvironment(
         try { FileUtils.deleteDirectory(kbLDirRoot) } catch (e: IOException) { /* tried at least */ }
     }
 
-    // see the following links for creating topic
-    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/admin/TopicCommand.scala
-    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/utils/ZkUtils.scala
-    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/admin/AdminUtils.scala
+    // see the following link for creating topic
+    // https://kafka.apache.org/20/javadoc/org/apache/kafka/clients/admin/AdminClient.html#createTopics-java.util.Collection-
 
     private fun createTopics(topics: List<String>) {
 
@@ -158,34 +156,23 @@ class KafkaEnvironment(
             return
         }
 
-        val sessTimeout = 1500
-        val connTimeout = 500
-        val noPartitions = serverPark.brokers.size
+        AdminClient.create(
+                Properties().apply {
+                    set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                    set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
+                }
+        ).use { adminClient ->
 
-        val zkUtils = ZkUtils.apply(serverPark.zookeeper.url, sessTimeout, connTimeout, false)
+            val noPartitions = serverPark.brokers.size
+            val replFactor = serverPark.brokers.size
 
-        topics.forEach {
-
-            // core/admin/TopicCommand for details
-            val opts = TopicCommand.TopicCommandOptions(
-                    arrayOf(
-                            "--create",
-                            it,
-                            "--if-not-exists",
-                            "--partitions", noPartitions.toString(),
-                            "--replication-factor", 1.toString(),
-                            "--zookeeper", serverPark.zookeeper.url
-                    )
-            )
-            val config = Properties() // no advanced config of topic...
-            val partitions = opts.options().valueOf(opts.partitionsOpt()).toInt()
-            val replicas = opts.options().valueOf(opts.replicationFactorOpt()).toInt()
-            val rackAwareDisabled = RackAwareMode.`Disabled$`()
-
-            AdminUtils.createTopic(zkUtils, it, partitions, replicas, config, rackAwareDisabled)
+            adminClient.createTopics(topics.map { NewTopic(it, noPartitions, replFactor.toShort()) })
         }
 
-        zkUtils.close()
         topicsCreated = true
+    }
+
+    companion object {
+        val log = KotlinLogging.logger { }
     }
 }

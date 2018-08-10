@@ -6,14 +6,14 @@ import no.nav.common.KafkaEnvironment
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.context
-import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import org.jetbrains.spek.api.dsl.xdescribe
 
 object KRServerSpec : Spek({
 
     val kEnv = KafkaEnvironment(withRest = true)
 
-    describe("kafka rest tests") {
+    xdescribe("kafka rest tests") {
 
         beforeGroup {
             kEnv.start()

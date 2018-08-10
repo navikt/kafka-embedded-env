@@ -11,7 +11,7 @@ import org.jetbrains.spek.api.dsl.it
 
 object SRServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(1, withSchemaRegistry = true)
+    val kEnv = KafkaEnvironment(withSchemaRegistry = true)
 
     describe("schema registry tests") {
 

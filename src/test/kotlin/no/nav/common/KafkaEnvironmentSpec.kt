@@ -1,33 +1,41 @@
 package no.nav.common
 
-import com.github.kittinunf.fuel.httpGet
-import kafka.utils.ZkUtils
+// import com.github.kittinunf.fuel.httpGet
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldEqualTo
 import org.amshove.kluent.shouldContainAll
-import org.amshove.kluent.shouldEqual
+import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.zookeeper.client.FourLetterWordMain
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import java.util.Properties
 
 object KafkaEnvironmentSpec : Spek({
 
-    val sessTimeout = 1500
-    val connTimeout = 500
+    fun KafkaEnvironment.acInit(): AdminClient =
+            AdminClient.create(
+                    Properties().apply {
+                        set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                        set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
+                    }
+            )
+
+    var adminClient: AdminClient? = null
 
     describe("kafka environment tests") {
 
         context("default kafka environment") {
 
             val keDefault = KafkaEnvironment()
-
             val nBroker = 1
             val nTopics = 0
 
             beforeGroup {
                 keDefault.start()
+                adminClient = keDefault.acInit()
             }
 
             it("should have 1 zookeeper") {
@@ -40,24 +48,17 @@ object KafkaEnvironmentSpec : Spek({
 
             it("should have $nBroker broker") {
 
-                ZkUtils.apply(keDefault.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allBrokersInCluster.size()
-                    close()
-                    n
-                } shouldEqualTo nBroker
+                adminClient?.describeCluster()?.nodes()?.get()?.toList()?.size ?: -1 shouldEqualTo nBroker
             }
 
             it("should have $nTopics topics available") {
 
-                ZkUtils.apply(keDefault.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allTopics.size()
-                    close()
-                    n
-                } shouldEqualTo nTopics
+                adminClient?.listTopics()?.names()?.get()?.toList()?.size ?: -1 shouldEqualTo nTopics
             }
 
             afterGroup {
                 keDefault.tearDown()
+                adminClient = null
             }
         }
 
@@ -65,12 +66,11 @@ object KafkaEnvironmentSpec : Spek({
 
             val basicTopics = listOf("basic01", "basic02")
             val keBasic = KafkaEnvironment(topics = basicTopics)
-
-            val zku = keBasic.serverPark.zookeeper.url
             val nBroker = 1
 
             beforeGroup {
                 keBasic.start()
+                adminClient = keBasic.acInit()
             }
 
             it("should have 1 zookeeper") {
@@ -83,44 +83,28 @@ object KafkaEnvironmentSpec : Spek({
 
             it("should have $nBroker broker") {
 
-                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
-                    val n = allBrokersInCluster.size()
-                    close()
-                    n
-                } shouldEqualTo nBroker
+                adminClient?.describeCluster()?.nodes()?.get()?.toList()?.size ?: -1 shouldEqualTo nBroker
             }
 
             it("should have ${basicTopics.size} topics available") {
 
-                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
-                    val n = allTopics.size()
-                    close()
-                    n
-                } shouldEqualTo basicTopics.size
+                adminClient?.listTopics()?.names()?.get()?.toList()?.size ?: -1 shouldEqualTo basicTopics.size
             }
 
             it("should have topics as requested available") {
 
-                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
-                    val topics = allTopics
-                    val lTopics = mutableListOf<String>()
-
-                    topics.foreach { lTopics.add(it) }
-                    close()
-                    lTopics
-                } shouldContainAll basicTopics
+                adminClient?.listTopics()?.names()?.get()?.toList() ?: emptyList<String>() shouldContainAll basicTopics
             }
 
             afterGroup {
                 keBasic.tearDown()
+                adminClient = null
             }
         }
 
         context("strange_1 kafka environment") {
 
             val keStrange1 = KafkaEnvironment(-2)
-
-            val zku = keStrange1.serverPark.zookeeper.url
             val nBroker = 0
 
             beforeGroup {
@@ -137,11 +121,8 @@ object KafkaEnvironmentSpec : Spek({
 
             it("should have $nBroker broker") {
 
-                ZkUtils.apply(zku, sessTimeout, connTimeout, false).run {
-                    val n = allBrokersInCluster.size()
-                    close()
-                    n
-                } shouldEqualTo nBroker
+                // Cannot initialize AdminClient, verify empty brokersURL instead
+                keStrange1.brokersURL shouldBeEqualTo ""
             }
 
             afterGroup {
@@ -149,7 +130,7 @@ object KafkaEnvironmentSpec : Spek({
             }
         }
 
-        context("strange_2 kafka environment") {
+        /*context("strange_2 kafka environment") {
 
             val strange2Topics = listOf("strange201", "strange202", "strange203")
             val keStrange2 = KafkaEnvironment(
@@ -221,6 +202,6 @@ object KafkaEnvironmentSpec : Spek({
             afterGroup {
                 keStrange2.tearDown()
             }
-        }
+        }*/
     }
 })

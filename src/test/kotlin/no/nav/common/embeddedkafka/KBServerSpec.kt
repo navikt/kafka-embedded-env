@@ -34,13 +34,11 @@ object KBServerSpec : Spek({
             it("should have $b broker(s)") {
 
                 adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
-
             }
 
             it("should not be any topics available") {
 
                 adminClient.listTopics().names().get().toList().size shouldEqualTo 0
-
             }
 
             afterGroup {
@@ -59,13 +57,11 @@ object KBServerSpec : Spek({
             it("should have $b broker(s)") {
 
                 adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
-
             }
 
             it("should not be any topics available") {
 
                 adminClient.listTopics().names().get().toList().size shouldEqualTo 0
-
             }
 
             afterGroup {
@@ -84,13 +80,11 @@ object KBServerSpec : Spek({
             it("should have $b broker(s)") {
 
                 adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
-
             }
 
             it("should not be any topics available") {
 
                 adminClient.listTopics().names().get().toList().size shouldEqualTo 0
-
             }
 
             afterGroup {
