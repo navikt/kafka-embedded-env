@@ -3,6 +3,7 @@ package no.nav.common
 import mu.KotlinLogging
 import no.nav.common.embeddedkafka.KBServer
 import no.nav.common.embeddedkafkarest.KRServer
+import no.nav.common.embeddedksql.KSQLServer
 import no.nav.common.embeddedschemaregistry.SRServer
 import no.nav.common.embeddedutils.ServerBase
 import no.nav.common.embeddedutils.EmptyShellServer
@@ -38,8 +39,9 @@ import java.util.UUID
 class KafkaEnvironment(
     private val noOfBrokers: Int = 1,
     val topics: List<String> = emptyList(),
-    withSchemaRegistry: Boolean = false,
-    withRest: Boolean = false,
+    private val withSchemaRegistry: Boolean = false,
+    private val withKSQL: Boolean = false,
+    private val withRest: Boolean = false,
     autoStart: Boolean = false
 ) {
 
@@ -52,13 +54,14 @@ class KafkaEnvironment(
         val zookeeper: ServerBase,
         val brokers: List<ServerBase>,
         val schemaregistry: ServerBase,
+        val ksql: ServerBase,
         val rest: ServerBase
     )
 
     // in case of strange config
     private val reqNoOfBrokers = when {
-        (noOfBrokers < 1 && (withSchemaRegistry || withRest)) -> 1
-        (noOfBrokers < 0 && !(withSchemaRegistry || withRest)) -> 0
+        (noOfBrokers < 1 && (withSchemaRegistry || withKSQL || withRest)) -> 1
+        (noOfBrokers < 0 && !(withSchemaRegistry || withKSQL || withRest)) -> 0
         else -> noOfBrokers
     }
 
@@ -74,32 +77,53 @@ class KafkaEnvironment(
         // in case of fatal failure and no deletion in previous run
         try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
     }
+
     private val kbLDirIter = (0 until reqNoOfBrokers).map {
         File(System.getProperty("java.io.tmpdir"), "inmkafkabroker/ID$it${UUID.randomUUID()}")
     }.iterator()
 
-    // allocate enough available ports
-    private val noOfPorts = 1 + reqNoOfBrokers +
-            listOf((withSchemaRegistry || withRest), withRest).filter { it == true }.size
+    private val ksqlDir = File(System.getProperty("java.io.tmpdir"), "inmksql").apply {
+        // in case of fatal failure and no deletion in previous run
+        try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
+    }
 
-    private val portsIter = (1..noOfPorts).map { getAvailablePort() }.iterator()
+    // allocate enough available ports
+/*    private val noOfPorts = 1 + reqNoOfBrokers +
+            listOf((withSchemaRegistry || withKSQL || withRest), withKSQL, withRest).filter { it == true }.size
+
+    private val portsIter = (1..noOfPorts).map { getAvailablePort() }.iterator()*/
 
     val serverPark: ServerPark
     val brokersURL: String
+    val adminClient: AdminClient
 
     // initialize servers and start, creation of topics
     init {
-        val zk = ZKServer(portsIter.next(), zkDataDir)
+        val zk = ZKServer(getAvailablePort(), zkDataDir)
         val kBrokers = (0 until reqNoOfBrokers).map {
-            KBServer(portsIter.next(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url)
+            KBServer(getAvailablePort(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url)
         }
-        brokersURL = kBrokers.map { it.url }
+
+        // getting a default value in case of no brokers. Avoiding nullable adminClient management
+        brokersURL = if (reqNoOfBrokers < 1) "PLAINTEXT://localhost:0000"
+        else kBrokers.map { it.url }
                 .foldRight("") { u, acc -> if (acc.isEmpty()) u else "$u,$acc" }
 
-        val sr = if (withSchemaRegistry || withRest) SRServer(portsIter.next(), zk.url, brokersURL) else EmptyShellServer()
-        val r = if (withRest) KRServer(portsIter.next(), zk.url, brokersURL, sr.url) else EmptyShellServer()
+        adminClient = AdminClient.create(
+                Properties().apply {
+                    set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                    set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
+                }
+        )
 
-        serverPark = ServerPark(zk, kBrokers, sr, r)
+        val sr = if (withSchemaRegistry || withKSQL || withRest)
+            SRServer(getAvailablePort(), zk.url, brokersURL) else EmptyShellServer()
+
+        val ksql = if (withKSQL) KSQLServer(getAvailablePort(), brokersURL, ksqlDir.absolutePath) else EmptyShellServer()
+
+        val r = if (withRest) KRServer(getAvailablePort(), zk.url, brokersURL, sr.url) else EmptyShellServer()
+
+        serverPark = ServerPark(zk, kBrokers, sr, ksql, r)
 
         if (autoStart) start()
     }
@@ -117,6 +141,8 @@ class KafkaEnvironment(
             schemaregistry.start()
             log.info { "Eventually starting rest server - ${rest.url}" }
             rest.start()
+            log.info { "Eventually starting ksql server - ${ksql.url}" }
+            ksql.start()
         }
         createTopics(topics)
     }
@@ -125,6 +151,8 @@ class KafkaEnvironment(
      * Stop the kafka environment
      */
     fun stop() = serverPark.apply {
+        log.info { "Eventually stopping ksql server" }
+        ksql.stop()
         log.info { "Eventually stopping rest server" }
         rest.stop()
         log.info { "Eventually stopping schema registry" }
@@ -142,6 +170,7 @@ class KafkaEnvironment(
         stop()
         try { FileUtils.deleteDirectory(zkDataDir) } catch (e: IOException) { /* tried at least */ }
         try { FileUtils.deleteDirectory(kbLDirRoot) } catch (e: IOException) { /* tried at least */ }
+        try { FileUtils.deleteDirectory(ksqlDir) } catch (e: IOException) { /* tried at least */ }
     }
 
     // see the following link for creating topic
@@ -156,7 +185,12 @@ class KafkaEnvironment(
             return
         }
 
-        AdminClient.create(
+        val noPartitions = serverPark.brokers.size
+        val replFactor = serverPark.brokers.size
+
+        adminClient.createTopics(topics.map { NewTopic(it, noPartitions, replFactor.toShort()) })
+
+/*        AdminClient.create(
                 Properties().apply {
                     set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
                     set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
@@ -167,7 +201,7 @@ class KafkaEnvironment(
             val replFactor = serverPark.brokers.size
 
             adminClient.createTopics(topics.map { NewTopic(it, noPartitions, replFactor.toShort()) })
-        }
+        }*/
 
         topicsCreated = true
     }

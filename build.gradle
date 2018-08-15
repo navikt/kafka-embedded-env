@@ -65,12 +65,21 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
         exclude group: 'log4j', module: 'log4j'
     }
+    implementation ("org.apache.kafka:kafka-streams:$kafka_version") {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'log4j', module: 'log4j'
+    }
     implementation ("io.confluent:kafka-schema-registry:$confluent_version") {
         exclude group: 'org.apache.kafka'
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
         exclude group: 'log4j', module: 'log4j'
     }
     implementation ("io.confluent:kafka-rest:$confluent_version") {
+        exclude group: 'org.apache.kafka'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'log4j', module: 'log4j'
+    }
+    implementation ("io.confluent.ksql:ksql-rest-app:$confluent_version") {
         exclude group: 'org.apache.kafka'
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
         exclude group: 'log4j', module: 'log4j'

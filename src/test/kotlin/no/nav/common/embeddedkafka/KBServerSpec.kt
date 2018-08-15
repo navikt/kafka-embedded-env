@@ -2,24 +2,14 @@ package no.nav.common.embeddedkafka
 
 import no.nav.common.KafkaEnvironment
 import org.amshove.kluent.shouldEqualTo
-import org.apache.kafka.clients.admin.AdminClient
-import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import java.util.Properties
 
 object KBServerSpec : Spek({
 
     val kEnv = KafkaEnvironment(2)
-
-    val adminClient = AdminClient.create(
-            Properties().apply {
-                set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kEnv.brokersURL)
-                set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
-            }
-    )
 
     describe("kafka broker tests") {
 
@@ -33,12 +23,12 @@ object KBServerSpec : Spek({
 
             it("should have $b broker(s)") {
 
-                adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
+                kEnv.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
             }
 
             it("should not be any topics available") {
 
-                adminClient.listTopics().names().get().toList().size shouldEqualTo 0
+                kEnv.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
             }
 
             afterGroup {
@@ -56,12 +46,12 @@ object KBServerSpec : Spek({
 
             it("should have $b broker(s)") {
 
-                adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
+                kEnv.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
             }
 
             it("should not be any topics available") {
 
-                adminClient.listTopics().names().get().toList().size shouldEqualTo 0
+                kEnv.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
             }
 
             afterGroup {
@@ -79,12 +69,12 @@ object KBServerSpec : Spek({
 
             it("should have $b broker(s)") {
 
-                adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
+                kEnv.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
             }
 
             it("should not be any topics available") {
 
-                adminClient.listTopics().names().get().toList().size shouldEqualTo 0
+                kEnv.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
             }
 
             afterGroup {
@@ -93,7 +83,6 @@ object KBServerSpec : Spek({
         }
 
         afterGroup {
-            adminClient.close()
             kEnv.tearDown()
         }
     }

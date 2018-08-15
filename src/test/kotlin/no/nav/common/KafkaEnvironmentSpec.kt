@@ -4,26 +4,13 @@ package no.nav.common
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldEqualTo
 import org.amshove.kluent.shouldContainAll
-import org.apache.kafka.clients.admin.AdminClient
-import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.zookeeper.client.FourLetterWordMain
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
-import java.util.Properties
 
 object KafkaEnvironmentSpec : Spek({
-
-    fun KafkaEnvironment.acInit(): AdminClient =
-            AdminClient.create(
-                    Properties().apply {
-                        set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
-                        set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
-                    }
-            )
-
-    var adminClient: AdminClient? = null
 
     describe("kafka environment tests") {
 
@@ -35,7 +22,6 @@ object KafkaEnvironmentSpec : Spek({
 
             beforeGroup {
                 keDefault.start()
-                adminClient = keDefault.acInit()
             }
 
             it("should have 1 zookeeper") {
@@ -48,17 +34,16 @@ object KafkaEnvironmentSpec : Spek({
 
             it("should have $nBroker broker") {
 
-                adminClient?.describeCluster()?.nodes()?.get()?.toList()?.size ?: -1 shouldEqualTo nBroker
+                keDefault.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo nBroker
             }
 
             it("should have $nTopics topics available") {
 
-                adminClient?.listTopics()?.names()?.get()?.toList()?.size ?: -1 shouldEqualTo nTopics
+                keDefault.adminClient.listTopics().names().get().toList().size shouldEqualTo nTopics
             }
 
             afterGroup {
                 keDefault.tearDown()
-                adminClient = null
             }
         }
 
@@ -70,7 +55,6 @@ object KafkaEnvironmentSpec : Spek({
 
             beforeGroup {
                 keBasic.start()
-                adminClient = keBasic.acInit()
             }
 
             it("should have 1 zookeeper") {
@@ -83,22 +67,21 @@ object KafkaEnvironmentSpec : Spek({
 
             it("should have $nBroker broker") {
 
-                adminClient?.describeCluster()?.nodes()?.get()?.toList()?.size ?: -1 shouldEqualTo nBroker
+                keBasic.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo nBroker
             }
 
             it("should have ${basicTopics.size} topics available") {
 
-                adminClient?.listTopics()?.names()?.get()?.toList()?.size ?: -1 shouldEqualTo basicTopics.size
+                keBasic.adminClient.listTopics().names().get().toList().size shouldEqualTo basicTopics.size
             }
 
             it("should have topics as requested available") {
 
-                adminClient?.listTopics()?.names()?.get()?.toList() ?: emptyList<String>() shouldContainAll basicTopics
+                keBasic.adminClient.listTopics().names().get().toList() shouldContainAll basicTopics
             }
 
             afterGroup {
                 keBasic.tearDown()
-                adminClient = null
             }
         }
 
@@ -122,7 +105,7 @@ object KafkaEnvironmentSpec : Spek({
             it("should have $nBroker broker") {
 
                 // Cannot initialize AdminClient, verify empty brokersURL instead
-                keStrange1.brokersURL shouldBeEqualTo ""
+                keStrange1.serverPark.brokers.size shouldEqualTo 0
             }
 
             afterGroup {
