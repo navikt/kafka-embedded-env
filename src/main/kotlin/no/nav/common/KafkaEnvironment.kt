@@ -24,26 +24,30 @@ import java.util.UUID
  * @param noOfBrokers no of brokers to spin up, default one
  * @param topics a list of topics to create at environment startup - default empty
  * @param withSchemaRegistry optional schema registry - default false
- * @param withRest optional rest server - default false
+ * @param withKSQL optional ksql server - default false
  * @param autoStart start servers immediately - default false
  *
- * withRest as true includes automatically schema registry
- * schema registry includes automatically at least one broker
+ * withSchemaRegistry as true automatically include at least one broker
+ * withKSQL as true will automatically include schema registry
+ * withRest as true will automatically include schema registry
  *
  * No topics are created if only zookeeper is requested
  *
  * A [ServerPark] property is available for custom management of servers
  * A [brokersURL] property is available, expedient when multiple brokers
+ * A [adminClient] property is available, referring to  invalid PLAINTEXT://localhost:0000 in case of just zookeeper
  *
  */
 class KafkaEnvironment(
-    private val noOfBrokers: Int = 1,
+    noOfBrokers: Int = 1,
     val topics: List<String> = emptyList(),
-    private val withSchemaRegistry: Boolean = false,
-    private val withKSQL: Boolean = false,
-    private val withRest: Boolean = false,
+    withSchemaRegistry: Boolean = false,
+    withKSQL: Boolean = false,
+    // withRest: Boolean = false,
     autoStart: Boolean = false
 ) {
+
+    private val withRest = false // disable withRest
 
     /**
      * A server park of the configured kafka environment
@@ -87,12 +91,6 @@ class KafkaEnvironment(
         try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
     }
 
-    // allocate enough available ports
-/*    private val noOfPorts = 1 + reqNoOfBrokers +
-            listOf((withSchemaRegistry || withKSQL || withRest), withKSQL, withRest).filter { it == true }.size
-
-    private val portsIter = (1..noOfPorts).map { getAvailablePort() }.iterator()*/
-
     val serverPark: ServerPark
     val brokersURL: String
     val adminClient: AdminClient
@@ -117,11 +115,11 @@ class KafkaEnvironment(
         )
 
         val sr = if (withSchemaRegistry || withKSQL || withRest)
-            SRServer(getAvailablePort(), zk.url, brokersURL) else EmptyShellServer()
+            SRServer(getAvailablePort(), brokersURL) else EmptyShellServer()
 
         val ksql = if (withKSQL) KSQLServer(getAvailablePort(), brokersURL, ksqlDir.absolutePath) else EmptyShellServer()
 
-        val r = if (withRest) KRServer(getAvailablePort(), zk.url, brokersURL, sr.url) else EmptyShellServer()
+        val r = if (withRest) KRServer(getAvailablePort(), brokersURL, sr.url) else EmptyShellServer()
 
         serverPark = ServerPark(zk, kBrokers, sr, ksql, r)
 
@@ -189,19 +187,6 @@ class KafkaEnvironment(
         val replFactor = serverPark.brokers.size
 
         adminClient.createTopics(topics.map { NewTopic(it, noPartitions, replFactor.toShort()) })
-
-/*        AdminClient.create(
-                Properties().apply {
-                    set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
-                    set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
-                }
-        ).use { adminClient ->
-
-            val noPartitions = serverPark.brokers.size
-            val replFactor = serverPark.brokers.size
-
-            adminClient.createTopics(topics.map { NewTopic(it, noPartitions, replFactor.toShort()) })
-        }*/
 
         topicsCreated = true
     }

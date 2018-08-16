@@ -11,7 +11,8 @@ import org.jetbrains.spek.api.dsl.xdescribe
 
 object KRServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(withRest = true)
+    // TODO - kafka rest is disabled - see KRServer
+    val kEnv = KafkaEnvironment(/*withRest = true*/)
 
     xdescribe("kafka rest tests") {
 

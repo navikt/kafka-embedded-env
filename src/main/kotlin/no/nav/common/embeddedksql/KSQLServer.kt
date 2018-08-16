@@ -17,7 +17,6 @@ class KSQLServer(
 ) : ServerBase() {
 
     // see link below for starting up embeddedksql
-    // https://github.com/confluentinc/ksql/blob/5.0.x/ksql-rest-app/src/main/java/io/confluent/ksql/rest/server/StandaloneExecutor.java
     // https://github.com/confluentinc/ksql/blob/5.0.x/ksql-rest-app/src/test/java/io/confluent/ksql/rest/server/KsqlServerMainTest.java
 
     override val url = "http://$host:$port"

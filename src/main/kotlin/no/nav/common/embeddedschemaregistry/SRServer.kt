@@ -7,7 +7,7 @@ import no.nav.common.embeddedutils.NotRunning
 import no.nav.common.embeddedutils.Running
 import java.util.Properties
 
-class SRServer(override val port: Int, private val zkURL: String, private val kbURL: String) : ServerBase() {
+class SRServer(override val port: Int, private val kbURL: String) : ServerBase() {
 
     // see link below for starting up embeddedschemaregistry
     // https://github.com/confluentinc/schema-registry/blob/5.0.x/core/src/main/java/io/confluent/kafka/schemaregistry/rest/SchemaRegistryMain.java
@@ -15,13 +15,12 @@ class SRServer(override val port: Int, private val zkURL: String, private val kb
     override val url = "http://$host:$port"
 
     // not possible to stop and restart schema registry at this level, use inner core class
-    private class SRS(url: String, zkURL: String, kbURL: String) {
+    private class SRS(url: String, kbURL: String) {
 
         val scServer = SchemaRegistryRestApplication(
                 SchemaRegistryConfig(
                         Properties().apply {
                             set(SchemaRegistryConfig.LISTENERS_CONFIG, url)
-                            // set(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG, zkURL)
                             set(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, kbURL)
                             set(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG, "_schemas")
                         }
@@ -33,7 +32,7 @@ class SRServer(override val port: Int, private val zkURL: String, private val kb
 
     override fun start() = when (status) {
         NotRunning -> {
-            SRS(url, zkURL, kbURL).apply {
+            SRS(url, kbURL).apply {
                 sr.add(this)
                 scServer.start()
             }

@@ -9,7 +9,6 @@ import java.util.Properties
 
 class KRServer(
     override val port: Int,
-    private val zkURL: String,
     private val kbURL: String,
     private var srURL: String
 ) : ServerBase() {
@@ -27,17 +26,16 @@ class KRServer(
     override val url = "http://$host:$port"
 
     // not possible to restart rest at this level, use inner core class
-    private class KRS(url: String, zkURL: String, kbURL: String, srURL: String) {
+    private class KRS(url: String, kbURL: String, srURL: String) {
 
         val krServer: KafkaRestApplication = KafkaRestApplication(
                 KafkaRestConfig(
                         Properties().apply {
                             // set(KafkaRestConfig.ID_CONFIG, "EMBREST")
                             set(KafkaRestConfig.LISTENERS_CONFIG, url)
-                            // set(KafkaRestConfig.ZOOKEEPER_CONNECT_CONFIG, zkURL)
                             set(KafkaRestConfig.BOOTSTRAP_SERVERS_CONFIG, kbURL)
                             set(KafkaRestConfig.SCHEMA_REGISTRY_URL_CONFIG, srURL)
-                            // set(KafkaRestConfig.PRODUCER_THREADS_CONFIG, 2) // 5
+                            set(KafkaRestConfig.PRODUCER_THREADS_CONFIG, 2) // 5
                         }
                 )
         )
@@ -47,7 +45,7 @@ class KRServer(
 
     override fun start() = when (status) {
         NotRunning -> {
-            KRS(url, zkURL, kbURL, srURL).apply {
+            KRS(url, kbURL, srURL).apply {
                 kr.add(this)
                 try { krServer.start() } catch (e: Exception) { /* nothing*/ }
             }
