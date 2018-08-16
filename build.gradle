@@ -7,6 +7,7 @@ buildscript {
     ext.kluent_version = '1.39'
     ext.spek_version = '1.1.5'
     ext.fuel_version = '1.15.0'
+    ext.ktor_version = '0.9.4-alpha-2'
     ext.slf4j_version = '1.7.5'
     ext.logback_version = '1.2.3'
     ext.kotlin_loggin_version = '1.5.4'
@@ -21,6 +22,9 @@ plugins {
     id 'signing'
     id 'io.codearte.nexus-staging' version '0.11.0'
 }
+
+// suppress warning for experimental coroutines
+kotlin { experimental { coroutines "enable"} }
 
 dokka {
     outputFormat = 'html'
@@ -49,11 +53,12 @@ version '2.0.0'
 sourceCompatibility = 1.8
 
 repositories {
-    jcenter()
-    mavenCentral()
     maven {
         url "http://packages.confluent.io/maven"
     }
+    maven { url "https://dl.bintray.com/kotlin/ktor" }
+    mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -88,6 +93,8 @@ dependencies {
     testImplementation "org.jetbrains.spek:spek-api:$spek_version"
     testRuntime "org.jetbrains.spek:spek-junit-platform-engine:$spek_version"
     testImplementation "com.github.kittinunf.fuel:fuel:$fuel_version"
+    testImplementation "io.ktor:ktor-client-core:$ktor_version"
+    testImplementation "io.ktor:ktor-client-apache:$ktor_version"
     testRuntimeOnly "org.slf4j:log4j-over-slf4j:$slf4j_version"
     testRuntimeOnly "ch.qos.logback:logback-classic:$logback_version"
     testImplementation 'org.junit.platform:junit-platform-runner:1.2.0'

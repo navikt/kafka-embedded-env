@@ -1,17 +1,35 @@
 package no.nav.common.embeddedschemaregistry
 
-import com.github.kittinunf.fuel.httpGet
-import com.github.kittinunf.result.Result
+import com.nhaarman.mockito_kotlin.timeout
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.apache.Apache
+import io.ktor.client.request.get
+import io.ktor.client.request.url
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.coroutines.experimental.runBlocking
 import no.nav.common.KafkaEnvironment
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.shouldBeEqualTo
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
+import java.net.URL
 
 object SRServerSpec : Spek({
 
     val kEnv = KafkaEnvironment(withSchemaRegistry = true)
+    val client = HttpClient(Apache)
+
+    val defaultCompatibilityLevel = """{"compatibilityLevel":"BACKWARD"}"""
+    val noSubjects = """[]"""
+
+    suspend fun getSomething(endpoint: String): String =
+            client.get {
+                url(URL(kEnv.serverPark.schemaregistry.url + "/$endpoint"))
+                contentType(ContentType.Application.Json)
+                timeout(500)
+            }
 
     describe("schema registry tests") {
 
@@ -21,18 +39,14 @@ object SRServerSpec : Spek({
 
         context("active embeddedkafka cluster with schema reg") {
 
-            it("should report config compatibility level") {
+            it("should report default compatibility level") {
 
-                (kEnv.serverPark.schemaregistry.url + "/config")
-                        .httpGet()
-                        .responseString().third.component1() shouldEqual """{"compatibilityLevel":"BACKWARD"}"""
+                runBlocking { getSomething("config") } shouldBeEqualTo defaultCompatibilityLevel
             }
 
             it("should report zero subjects") {
 
-                (kEnv.serverPark.schemaregistry.url + "/subjects")
-                        .httpGet()
-                        .responseString().third.component1() shouldEqual """[]"""
+                runBlocking { getSomething("subjects") } shouldBeEqualTo noSubjects
             }
         }
 
@@ -44,14 +58,13 @@ object SRServerSpec : Spek({
 
             it("should not report config - connection refused") {
 
-                val (_, _, result) = (kEnv.serverPark.schemaregistry.url + "/config").httpGet()
-                        .timeout(500)
-                        .responseString()
+                val response = try {
+                    runBlocking { getSomething("config") }
+                } catch (e: Exception) {
+                    e.javaClass.name
+                }
 
-                when (result) {
-                    is Result.Failure -> true // result.error.message
-                    is Result.Success -> false // result.value
-                } shouldEqual true // "java.net.ConnectException: Connection refused (Connection refused)"
+                response shouldBeEqualTo "java.net.ConnectException"
             }
         }
 
@@ -63,16 +76,12 @@ object SRServerSpec : Spek({
 
             it("should report config compatibility level") {
 
-                (kEnv.serverPark.schemaregistry.url + "/config")
-                        .httpGet()
-                        .responseString().third.component1() shouldEqual """{"compatibilityLevel":"BACKWARD"}"""
+                runBlocking { getSomething("config") } shouldBeEqualTo defaultCompatibilityLevel
             }
 
             it("should report zero subjects") {
 
-                (kEnv.serverPark.schemaregistry.url + "/subjects")
-                        .httpGet()
-                        .responseString().third.component1() shouldEqual """[]"""
+                runBlocking { getSomething("subjects") } shouldBeEqualTo noSubjects
             }
         }
 
