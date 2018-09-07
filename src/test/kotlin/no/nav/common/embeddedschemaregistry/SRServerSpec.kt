@@ -1,35 +1,21 @@
 package no.nav.common.embeddedschemaregistry
 
-import com.nhaarman.mockito_kotlin.timeout
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
-import io.ktor.client.request.get
-import io.ktor.client.request.url
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlinx.coroutines.experimental.runBlocking
 import no.nav.common.KafkaEnvironment
+import no.nav.common.test.common.SCHEMAREG_DefaultCompatibilityLevel
+import no.nav.common.test.common.SCHEMAREG_NoSubjects
+import no.nav.common.test.common.getSomething
 import org.amshove.kluent.shouldBeEqualTo
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.context
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import java.net.URL
 
 object SRServerSpec : Spek({
 
     val kEnv = KafkaEnvironment(withSchemaRegistry = true)
     val client = HttpClient(Apache)
-
-    val defaultCompatibilityLevel = """{"compatibilityLevel":"BACKWARD"}"""
-    val noSubjects = """[]"""
-
-    suspend fun getSomething(endpoint: String): String =
-            client.get {
-                url(URL(kEnv.serverPark.schemaregistry.url + "/$endpoint"))
-                contentType(ContentType.Application.Json)
-                timeout(500)
-            }
 
     describe("schema registry tests") {
 
@@ -41,12 +27,16 @@ object SRServerSpec : Spek({
 
             it("should report default compatibility level") {
 
-                runBlocking { getSomething("config") } shouldBeEqualTo defaultCompatibilityLevel
+                runBlocking {
+                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/config"))
+                } shouldBeEqualTo SCHEMAREG_DefaultCompatibilityLevel
             }
 
             it("should report zero subjects") {
 
-                runBlocking { getSomething("subjects") } shouldBeEqualTo noSubjects
+                runBlocking {
+                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/subjects"))
+                } shouldBeEqualTo SCHEMAREG_NoSubjects
             }
         }
 
@@ -59,7 +49,9 @@ object SRServerSpec : Spek({
             it("should not report config - connection refused") {
 
                 val response = try {
-                    runBlocking { getSomething("config") }
+                    runBlocking {
+                        client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/config"))
+                    }
                 } catch (e: Exception) {
                     e.javaClass.name
                 }
@@ -74,14 +66,18 @@ object SRServerSpec : Spek({
                 kEnv.serverPark.schemaregistry.start()
             }
 
-            it("should report config compatibility level") {
+            it("should report default compatibility level") {
 
-                runBlocking { getSomething("config") } shouldBeEqualTo defaultCompatibilityLevel
+                runBlocking {
+                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/config"))
+                } shouldBeEqualTo SCHEMAREG_DefaultCompatibilityLevel
             }
 
             it("should report zero subjects") {
 
-                runBlocking { getSomething("subjects") } shouldBeEqualTo noSubjects
+                runBlocking {
+                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/subjects"))
+                } shouldBeEqualTo SCHEMAREG_NoSubjects
             }
         }
 

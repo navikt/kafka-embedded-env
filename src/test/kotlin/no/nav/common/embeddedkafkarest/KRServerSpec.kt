@@ -4,14 +4,13 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.result.Result
 import no.nav.common.KafkaEnvironment
 import org.amshove.kluent.shouldEqual
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.context
-import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.xdescribe
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.xdescribe
 
 object KRServerSpec : Spek({
 
     // TODO - kafka rest is disabled - see KRServer
+    // TODO - when KRServer is enabled again, switch from kittinunf to ktor client
     val kEnv = KafkaEnvironment(/*withRest = true*/)
 
     xdescribe("kafka rest tests") {

@@ -35,7 +35,7 @@ import java.util.UUID
  *
  * A [ServerPark] property is available for custom management of servers
  * A [brokersURL] property is available, expedient when multiple brokers
- * A [adminClient] property is available, referring to  invalid PLAINTEXT://localhost:0000 in case of just zookeeper
+ * A [adminClient] property is available, referring to invalid PLAINTEXT://localhost:0000 in case of just zookeeper
  *
  */
 class KafkaEnvironment(
@@ -47,7 +47,7 @@ class KafkaEnvironment(
     autoStart: Boolean = false
 ) {
 
-    private val withRest = false // disable withRest
+    private val withRest = false // TODO enable REST when no dependency to previous version
 
     /**
      * A server park of the configured kafka environment
@@ -64,8 +64,8 @@ class KafkaEnvironment(
 
     // in case of strange config
     private val reqNoOfBrokers = when {
-        (noOfBrokers < 1 && (withSchemaRegistry || withKSQL || withRest)) -> 1
-        (noOfBrokers < 0 && !(withSchemaRegistry || withKSQL || withRest)) -> 0
+        (noOfBrokers < 1 && (withSchemaRegistry || withKSQL || withRest || topics.isNotEmpty())) -> 1
+        (noOfBrokers < 1 && !(withSchemaRegistry || withKSQL || withRest || topics.isNotEmpty())) -> 0
         else -> noOfBrokers
     }
 
