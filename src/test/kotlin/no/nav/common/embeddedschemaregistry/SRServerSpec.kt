@@ -14,10 +14,10 @@ import java.net.URL
 
 object SRServerSpec : Spek({
 
-    val kEnvSRSS = KafkaEnvironment(withSchemaRegistry = true)
-    val client = HttpClient(Apache)
-
     describe("schema registry tests") {
+
+        val kEnvSRSS = KafkaEnvironment(withSchemaRegistry = true)
+        val client = HttpClient(Apache)
 
         beforeGroup {
             kEnvSRSS.start()

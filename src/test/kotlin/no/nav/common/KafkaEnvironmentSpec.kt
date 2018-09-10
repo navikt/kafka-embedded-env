@@ -91,8 +91,8 @@ object KafkaEnvironmentSpec : Spek({
 
         context("kafka environment with 0 brokers") {
 
-            val kEnv0 = KafkaEnvironment(0)
             val nBroker = 0
+            val kEnv0 = KafkaEnvironment(noOfBrokers = nBroker)
 
             beforeGroup {
                 kEnv0.start()
@@ -208,7 +208,5 @@ object KafkaEnvironmentSpec : Spek({
                 kEnv2.tearDown()
             }
         }
-
-        //
     }
 })

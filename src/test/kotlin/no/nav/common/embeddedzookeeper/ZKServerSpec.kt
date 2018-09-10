@@ -8,18 +8,18 @@ import org.spekframework.spek2.style.specification.describe
 
 object ZKServerSpec : Spek({
 
-    val kEnvZKSS = KafkaEnvironment(0) // need only zookeeper
-
     describe("zookeeper server tests") {
 
+        val kEnvZKSS = KafkaEnvironment(0) // need only zookeeper
+
         beforeGroup {
-            // nothing here
+            kEnvZKSS.start()
         }
 
         context("active embeddedzookeeper (start/stop)") {
 
             beforeGroup {
-                kEnvZKSS.start()
+                // nothing here
             }
 
             it("should be ok - command ruok with response imok") {

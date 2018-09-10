@@ -7,16 +7,20 @@ import org.spekframework.spek2.style.specification.describe
 
 object KBServerSpec : Spek({
 
-    val kEnvKBSS = KafkaEnvironment(2)
-
     describe("kafka broker tests") {
+
+        val kEnvKBSS = KafkaEnvironment(2)
+
+        beforeGroup {
+            kEnvKBSS.start()
+        }
 
         context("active embeddedkafka cluster of two broker") {
 
             val b = 2
 
             beforeGroup {
-                kEnvKBSS.start()
+                // nothing here
             }
 
             it("should have $b broker(s)") {
