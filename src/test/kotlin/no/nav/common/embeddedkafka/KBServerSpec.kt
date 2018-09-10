@@ -7,7 +7,7 @@ import org.spekframework.spek2.style.specification.describe
 
 object KBServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(2)
+    val kEnvKBSS = KafkaEnvironment(2)
 
     describe("kafka broker tests") {
 
@@ -16,17 +16,17 @@ object KBServerSpec : Spek({
             val b = 2
 
             beforeGroup {
-                kEnv.start()
+                kEnvKBSS.start()
             }
 
             it("should have $b broker(s)") {
 
-                kEnv.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
+                kEnvKBSS.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
             }
 
             it("should not be any topics available") {
 
-                kEnv.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
+                kEnvKBSS.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
             }
 
             afterGroup {
@@ -39,17 +39,17 @@ object KBServerSpec : Spek({
             val b = 1
 
             beforeGroup {
-                kEnv.serverPark.brokers[0].stop()
+                kEnvKBSS.serverPark.brokers[0].stop()
             }
 
             it("should have $b broker(s)") {
 
-                kEnv.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
+                kEnvKBSS.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
             }
 
             it("should not be any topics available") {
 
-                kEnv.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
+                kEnvKBSS.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
             }
 
             afterGroup {
@@ -62,17 +62,17 @@ object KBServerSpec : Spek({
             val b = 2
 
             beforeGroup {
-                kEnv.serverPark.brokers[0].start()
+                kEnvKBSS.serverPark.brokers[0].start()
             }
 
             it("should have $b broker(s)") {
 
-                kEnv.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
+                kEnvKBSS.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo b
             }
 
             it("should not be any topics available") {
 
-                kEnv.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
+                kEnvKBSS.adminClient.listTopics().names().get().toList().size shouldEqualTo 0
             }
 
             afterGroup {
@@ -81,7 +81,7 @@ object KBServerSpec : Spek({
         }
 
         afterGroup {
-            kEnv.tearDown()
+            kEnvKBSS.tearDown()
         }
     }
 })

@@ -14,13 +14,13 @@ import java.net.URL
 
 object SRServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(withSchemaRegistry = true)
+    val kEnvSRSS = KafkaEnvironment(withSchemaRegistry = true)
     val client = HttpClient(Apache)
 
     describe("schema registry tests") {
 
         beforeGroup {
-            kEnv.start()
+            kEnvSRSS.start()
         }
 
         context("active embeddedkafka cluster with schema reg") {
@@ -28,14 +28,14 @@ object SRServerSpec : Spek({
             it("should report default compatibility level") {
 
                 runBlocking {
-                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/config"))
+                    client.getSomething(URL(kEnvSRSS.serverPark.schemaregistry.url + "/config"))
                 } shouldBeEqualTo SCHEMAREG_DefaultCompatibilityLevel
             }
 
             it("should report zero subjects") {
 
                 runBlocking {
-                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/subjects"))
+                    client.getSomething(URL(kEnvSRSS.serverPark.schemaregistry.url + "/subjects"))
                 } shouldBeEqualTo SCHEMAREG_NoSubjects
             }
         }
@@ -43,14 +43,14 @@ object SRServerSpec : Spek({
         context("active embeddedkafka cluster with stopped schema reg") {
 
             beforeGroup {
-                kEnv.serverPark.schemaregistry.stop()
+                kEnvSRSS.serverPark.schemaregistry.stop()
             }
 
             it("should not report config - connection refused") {
 
                 val response = try {
                     runBlocking {
-                        client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/config"))
+                        client.getSomething(URL(kEnvSRSS.serverPark.schemaregistry.url + "/config"))
                     }
                 } catch (e: Exception) {
                     e.javaClass.name
@@ -63,26 +63,26 @@ object SRServerSpec : Spek({
         context("active embeddedkafka cluster with restarted schema reg") {
 
             beforeGroup {
-                kEnv.serverPark.schemaregistry.start()
+                kEnvSRSS.serverPark.schemaregistry.start()
             }
 
             it("should report default compatibility level") {
 
                 runBlocking {
-                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/config"))
+                    client.getSomething(URL(kEnvSRSS.serverPark.schemaregistry.url + "/config"))
                 } shouldBeEqualTo SCHEMAREG_DefaultCompatibilityLevel
             }
 
             it("should report zero subjects") {
 
                 runBlocking {
-                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/subjects"))
+                    client.getSomething(URL(kEnvSRSS.serverPark.schemaregistry.url + "/subjects"))
                 } shouldBeEqualTo SCHEMAREG_NoSubjects
             }
         }
 
         afterGroup {
-            kEnv.tearDown()
+            kEnvSRSS.tearDown()
         }
     }
 })

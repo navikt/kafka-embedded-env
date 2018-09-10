@@ -8,7 +8,7 @@ import org.spekframework.spek2.style.specification.describe
 
 object ZKServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(0) // need only zookeeper
+    val kEnvZKSS = KafkaEnvironment(0) // need only zookeeper
 
     describe("zookeeper server tests") {
 
@@ -19,59 +19,59 @@ object ZKServerSpec : Spek({
         context("active embeddedzookeeper (start/stop)") {
 
             beforeGroup {
-                kEnv.start()
+                kEnvZKSS.start()
             }
 
             it("should be ok - command ruok with response imok") {
 
                 FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
+                        kEnvZKSS.serverPark.zookeeper.host,
+                        kEnvZKSS.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
             }
 
             it("should have no outstanding requests - command reqs with response empty string") {
 
                 FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
+                        kEnvZKSS.serverPark.zookeeper.host,
+                        kEnvZKSS.serverPark.zookeeper.port,
                         "reqs") shouldBeEqualTo ""
             }
 
             afterGroup {
-                kEnv.stop()
+                kEnvZKSS.stop()
             }
         }
 
         context("active embeddedzookeeper (start/stop for 2nd time) ") {
 
             beforeGroup {
-                kEnv.start()
+                kEnvZKSS.start()
             }
 
             it("should be ok - command ruok with response imok") {
 
                 FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
+                        kEnvZKSS.serverPark.zookeeper.host,
+                        kEnvZKSS.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
             }
 
             it("should have no outstanding requests - command reqs with response empty string") {
 
                 FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
+                        kEnvZKSS.serverPark.zookeeper.host,
+                        kEnvZKSS.serverPark.zookeeper.port,
                         "reqs") shouldBeEqualTo ""
             }
 
             afterGroup {
-                kEnv.stop()
+                kEnvZKSS.stop()
             }
         }
 
         afterGroup {
-            kEnv.tearDown()
+            kEnvZKSS.tearDown()
         }
     }
 })

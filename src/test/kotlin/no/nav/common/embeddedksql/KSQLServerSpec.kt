@@ -16,13 +16,13 @@ import java.net.URL
 
 object KSQLServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(1, withKSQL = true)
+    val kEnvKSSS = KafkaEnvironment(1, withKSQL = true)
     val client = HttpClient(Apache)
 
     suspend fun getStreams(): String =
 
         client.post {
-            url(URL(kEnv.serverPark.ksql.url + "/ksql"))
+            url(URL(kEnvKSSS.serverPark.ksql.url + "/ksql"))
             contentType(ContentType.Application.Json)
             timeout(500)
             body = """{"ksql": "LIST STREAMS;","streamsProperties": {}}"""
@@ -33,7 +33,7 @@ object KSQLServerSpec : Spek({
         context("active embeddedkafka cluster") {
 
             beforeGroup {
-                kEnv.start()
+                kEnvKSSS.start()
             }
 
             it("should have ksql server available") {
@@ -44,7 +44,7 @@ object KSQLServerSpec : Spek({
             }
 
             afterGroup {
-                kEnv.tearDown()
+                kEnvKSSS.tearDown()
             }
         }
     }

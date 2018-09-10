@@ -91,121 +91,121 @@ object KafkaEnvironmentSpec : Spek({
 
         context("kafka environment with 0 brokers") {
 
-            val kEnv = KafkaEnvironment(0)
+            val kEnv0 = KafkaEnvironment(0)
             val nBroker = 0
 
             beforeGroup {
-                kEnv.start()
+                kEnv0.start()
             }
 
             it("should have 1 zookeeper") {
 
                 FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
+                        kEnv0.serverPark.zookeeper.host,
+                        kEnv0.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
             }
 
             it("should have $nBroker broker") {
 
                 // Cannot initialize AdminClient, verify empty brokersURL instead
-                kEnv.serverPark.brokers.size shouldEqualTo 0
+                kEnv0.serverPark.brokers.size shouldEqualTo 0
             }
 
             afterGroup {
-                kEnv.tearDown()
+                kEnv0.tearDown()
             }
         }
 
         context("kafka environment with 0 brokers and 2 topics") {
 
             val basicTopics = listOf("basic01", "basic02")
-            val kEnv = KafkaEnvironment(noOfBrokers = 0, topics = basicTopics)
+            val kEnv1 = KafkaEnvironment(noOfBrokers = 0, topics = basicTopics)
             val nBroker = 1
 
             beforeGroup {
-                kEnv.start()
+                kEnv1.start()
             }
 
             it("should have 1 zookeeper") {
 
                 FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
+                        kEnv1.serverPark.zookeeper.host,
+                        kEnv1.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
             }
 
             it("should have $nBroker broker") {
 
-                kEnv.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo nBroker
+                kEnv1.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo nBroker
             }
 
             it("should have ${basicTopics.size} topics available") {
 
-                kEnv.adminClient.listTopics().names().get().toList().size shouldEqualTo basicTopics.size
+                kEnv1.adminClient.listTopics().names().get().toList().size shouldEqualTo basicTopics.size
             }
 
             it("should have topics as requested available") {
 
-                kEnv.adminClient.listTopics().names().get().toList() shouldContainAll basicTopics
+                kEnv1.adminClient.listTopics().names().get().toList() shouldContainAll basicTopics
             }
 
             afterGroup {
-                kEnv.tearDown()
+                kEnv1.tearDown()
             }
         }
 
         context("kafka environment with 0 brokers, 2 topics and schema registry") {
 
             val basicTopics = listOf("basic01", "basic02")
-            val kEnv = KafkaEnvironment(noOfBrokers = 0, topics = basicTopics, withSchemaRegistry = true)
+            val kEnv2 = KafkaEnvironment(noOfBrokers = 0, topics = basicTopics, withSchemaRegistry = true)
             val nBroker = 1
             val client = HttpClient(Apache)
 
             beforeGroup {
-                kEnv.start()
+                kEnv2.start()
             }
 
             it("should have 1 zookeeper") {
 
                 FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
+                        kEnv2.serverPark.zookeeper.host,
+                        kEnv2.serverPark.zookeeper.port,
                         "ruok") shouldBeEqualTo "imok\n"
             }
 
             it("should have $nBroker broker") {
 
-                kEnv.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo nBroker
+                kEnv2.adminClient.describeCluster().nodes().get().toList().size shouldEqualTo nBroker
             }
 
             it("should have ${basicTopics.size + 1} topics available") {
 
                 // schema registry will add __schemas topic to kafka broker
-                kEnv.adminClient.listTopics().names().get().toList().size shouldEqualTo basicTopics.size + 1
+                kEnv2.adminClient.listTopics().names().get().toList().size shouldEqualTo basicTopics.size + 1
             }
 
             it("should have topics $basicTopics  available") {
 
-                kEnv.adminClient.listTopics().names().get().toList() shouldContainAll basicTopics
+                kEnv2.adminClient.listTopics().names().get().toList() shouldContainAll basicTopics
             }
 
             it("should report default compatibility level for schema registry") {
 
                 runBlocking {
-                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/config"))
+                    client.getSomething(URL(kEnv2.serverPark.schemaregistry.url + "/config"))
                 } shouldBeEqualTo SCHEMAREG_DefaultCompatibilityLevel
             }
 
             it("should report zero subjects for schema registry") {
 
                 runBlocking {
-                    client.getSomething(URL(kEnv.serverPark.schemaregistry.url + "/subjects"))
+                    client.getSomething(URL(kEnv2.serverPark.schemaregistry.url + "/subjects"))
                 } shouldBeEqualTo SCHEMAREG_NoSubjects
             }
 
             afterGroup {
-                kEnv.tearDown()
+                kEnv2.tearDown()
             }
         }
 
