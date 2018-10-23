@@ -65,28 +65,29 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     implementation "io.github.microutils:kotlin-logging:$kotlin_loggin_version"
     implementation "org.apache.commons:commons-io:$commons_version"
+    implementation "org.apache.zookeeper:zookeeper:3.4.13"
     implementation ("org.apache.kafka:kafka_2.12:$kafka_version") {
-        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-        exclude group: 'log4j', module: 'log4j'
+        //exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        //exclude group: 'log4j', module: 'log4j'
     }
     implementation ("org.apache.kafka:kafka-streams:$kafka_version") {
-        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-        exclude group: 'log4j', module: 'log4j'
+        //exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        //exclude group: 'log4j', module: 'log4j'
     }
     implementation ("io.confluent:kafka-schema-registry:$confluent_version") {
         exclude group: 'org.apache.kafka'
-        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-        exclude group: 'log4j', module: 'log4j'
+        //exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        //exclude group: 'log4j', module: 'log4j'
     }
     implementation ("io.confluent:kafka-rest:$confluent_version") {
         exclude group: 'org.apache.kafka'
-        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-        exclude group: 'log4j', module: 'log4j'
+        //exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        //exclude group: 'log4j', module: 'log4j'
     }
     implementation ("io.confluent.ksql:ksql-rest-app:$confluent_version") {
         exclude group: 'org.apache.kafka'
-        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-        exclude group: 'log4j', module: 'log4j'
+        //exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        //exclude group: 'log4j', module: 'log4j'
     }
     testImplementation "org.amshove.kluent:kluent:$kluent_version"
     //testImplementation "org.jetbrains.spek:spek-api:$spek_version"
@@ -102,8 +103,8 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin'
     }
 
-    testRuntimeOnly "org.slf4j:log4j-over-slf4j:$slf4j_version"
-    testRuntimeOnly "ch.qos.logback:logback-classic:$logback_version"
+    //testRuntimeOnly "org.slf4j:log4j-over-slf4j:$slf4j_version"
+    //testRuntimeOnly "ch.qos.logback:logback-classic:$logback_version"
     //testImplementation 'org.junit.platform:junit-platform-runner:1.2.0'
 }
 

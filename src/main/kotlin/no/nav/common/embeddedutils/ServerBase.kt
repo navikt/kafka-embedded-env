@@ -6,7 +6,7 @@ package no.nav.common.embeddedutils
  */
 abstract class ServerBase {
 
-    protected var status: ServerStatus = NotRunning
+    protected var status: ServerStatus = ServerStatus.NotRunning
 
     open val host: String = "localhost"
     abstract val port: Int

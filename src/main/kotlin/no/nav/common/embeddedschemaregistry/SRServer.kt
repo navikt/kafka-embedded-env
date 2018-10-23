@@ -3,8 +3,7 @@ package no.nav.common.embeddedschemaregistry
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication
 import no.nav.common.embeddedutils.ServerBase
-import no.nav.common.embeddedutils.NotRunning
-import no.nav.common.embeddedutils.Running
+import no.nav.common.embeddedutils.ServerStatus
 import java.util.Properties
 
 class SRServer(override val port: Int, private val kbURL: String) : ServerBase() {
@@ -31,26 +30,26 @@ class SRServer(override val port: Int, private val kbURL: String) : ServerBase()
     private val sr = mutableListOf<SRS>()
 
     override fun start() = when (status) {
-        NotRunning -> {
+        ServerStatus.NotRunning -> {
             SRS(url, kbURL).apply {
                 sr.add(this)
                 scServer.start()
             }
 
-            status = Running
+            status = ServerStatus.Running
         }
         else -> {}
     }
 
     override fun stop() = when (status) {
-        Running -> {
+        ServerStatus.Running -> {
             sr.first().apply {
                 scServer.stop()
                 scServer.join()
             }
             sr.removeAll { true }
 
-            status = NotRunning
+            status = ServerStatus.NotRunning
         }
         else -> {}
     }

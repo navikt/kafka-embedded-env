@@ -2,11 +2,8 @@ package no.nav.common
 
 import mu.KotlinLogging
 import no.nav.common.embeddedkafka.KBServer
-import no.nav.common.embeddedkafkarest.KRServer
-import no.nav.common.embeddedksql.KSQLServer
 import no.nav.common.embeddedschemaregistry.SRServer
 import no.nav.common.embeddedutils.ServerBase
-import no.nav.common.embeddedutils.EmptyShellServer
 import no.nav.common.embeddedutils.getAvailablePort
 import no.nav.common.embeddedzookeeper.ZKServer
 import org.apache.commons.io.FileUtils
@@ -21,51 +18,99 @@ import java.util.UUID
 /**
  * A in-memory kafka environment consisting of
  * - 1 zookeeper
- * @param noOfBrokers no of brokers to spin up, default one
+ * @param noOfBrokers no of brokers to spin up, default one and maximum 2
  * @param topics a list of topics to create at environment startup - default empty
  * @param withSchemaRegistry optional schema registry - default false
- * @param withKSQL optional ksql server - default false
  * @param autoStart start servers immediately - default false
+ * @param minSecurity gives minimum plain security (authentication and authorization)
  *
- * withSchemaRegistry as true automatically include at least one broker
- * withKSQL as true will automatically include schema registry
- * withRest as true will automatically include schema registry
+ * If noOfBrokers is zero, non-empty topics or withSchemaRegistry as true, will automatically include one broker
  *
- * No topics are created if only zookeeper is requested
+ * minSecurity is a special feature for testing kafka adminRest API only
  *
- * A [ServerPark] property is available for custom management of servers
- * A [brokersURL] property is available, expedient when multiple brokers
- * A [adminClient] property is available, referring to invalid PLAINTEXT://localhost:0000 in case of just zookeeper
+ * A [serverPark] property is available for custom management of servers
+ *
+ * Observe that serverPark is 'cumbersome' due to different configuration options,
+ * with or without brokers and schema registry. AdminClient is depended on started brokers
+ *
+ * Some helper properties are available in order to ease the state management. Observe values depend on state
+ * [zookeeper] property
+ * [brokers] property - relevant iff broker(s) included in config
+ * [adminClient] property - relevant iff broker(s) included in config. and serverPark started
+ * [schemaRegistry] property - relevant iff schema reg included in config and serverPark started
  *
  */
 class KafkaEnvironment(
     noOfBrokers: Int = 1,
     val topics: List<String> = emptyList(),
     withSchemaRegistry: Boolean = false,
-    withKSQL: Boolean = false,
-    // withRest: Boolean = false,
-    autoStart: Boolean = false
+    autoStart: Boolean = false,
+    private val minSecurity: Boolean = false
 ) {
 
-    private val withRest = false // TODO enable REST when no dependency to previous version
+    sealed class BrokerStatus {
+        data class Available(
+            val brokers: List<ServerBase>,
+            val brokersURL: String
+        ) : BrokerStatus()
+        object NotAvailable : BrokerStatus()
+    }
 
-    /**
-     * A server park of the configured kafka environment
-     * Each server has basic properties (url, host, port)
-     * and start/stop methods
-     */
+    private fun BrokerStatus.Available.createAdminClient(): AdminClient =
+            AdminClient.create(
+                    Properties().apply {
+                        set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                        set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
+                        if (minSecurity) {
+                            set("security.protocol", "SASL_PLAINTEXT")
+                            set("sasl.mechanism", "PLAIN")
+                            // see JAASContext object
+                            set("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required " +
+                                    "username=\"${kafkaClient.username}\" password=\"${kafkaClient.password}\";")
+                        }
+                    }
+            )
+
+    sealed class SchemaRegistryStatus {
+        data class Available(val schemaRegistry: ServerBase) : SchemaRegistryStatus()
+        object NotAvailable : SchemaRegistryStatus()
+    }
+
+    sealed class ServerParkStatus {
+        object Initialized : ServerParkStatus()
+        object Started : ServerParkStatus()
+        object Stopped : ServerParkStatus()
+        object TearDownCompleted : ServerParkStatus()
+    }
+
     data class ServerPark(
         val zookeeper: ServerBase,
-        val brokers: List<ServerBase>,
-        val schemaregistry: ServerBase,
-        val ksql: ServerBase,
-        val rest: ServerBase
+        val brokerStatus: BrokerStatus,
+        val schemaRegStatus: SchemaRegistryStatus,
+        val status: ServerParkStatus
     )
+
+    private fun ServerPark.getAdminClient(): AdminClient? = when (brokerStatus) {
+        is BrokerStatus.Available -> if (serverPark.status == ServerParkStatus.Started)
+            brokerStatus.createAdminClient() else null
+        else -> null
+    }
+
+    private fun ServerPark.getBrokers(): List<ServerBase> = when (brokerStatus) {
+        is BrokerStatus.Available -> brokerStatus.brokers
+        else -> emptyList()
+    }
+
+    private fun ServerPark.getSchemaReg(): ServerBase? = when (schemaRegStatus) {
+        is SchemaRegistryStatus.Available -> schemaRegStatus.schemaRegistry
+        else -> null
+    }
 
     // in case of strange config
     private val reqNoOfBrokers = when {
-        (noOfBrokers < 1 && (withSchemaRegistry || withKSQL || withRest || topics.isNotEmpty())) -> 1
-        (noOfBrokers < 1 && !(withSchemaRegistry || withKSQL || withRest || topics.isNotEmpty())) -> 0
+        (noOfBrokers < 1 && (withSchemaRegistry || topics.isNotEmpty())) -> 1
+        (noOfBrokers < 1 && !(withSchemaRegistry || topics.isNotEmpty())) -> 0
+        noOfBrokers > 2 -> 2
         else -> noOfBrokers
     }
 
@@ -86,89 +131,145 @@ class KafkaEnvironment(
         File(System.getProperty("java.io.tmpdir"), "inmkafkabroker/ID$it${UUID.randomUUID()}")
     }.iterator()
 
-    private val ksqlDir = File(System.getProperty("java.io.tmpdir"), "inmksql").apply {
-        // in case of fatal failure and no deletion in previous run
-        try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
-    }
-
-    val serverPark: ServerPark
-    val brokersURL: String
-    val adminClient: AdminClient
+    var serverPark: ServerPark
+        private set
 
     // initialize servers and start, creation of topics
     init {
-        val zk = ZKServer(getAvailablePort(), zkDataDir)
+        if (minSecurity) JAASContext.setUp()
+
+        val zk = ZKServer(getAvailablePort(), zkDataDir, minSecurity)
+
         val kBrokers = (0 until reqNoOfBrokers).map {
-            KBServer(getAvailablePort(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url)
+            KBServer(getAvailablePort(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url, minSecurity)
+        }
+        val brokersURL = kBrokers.map { it.url }.foldRight("") { u, acc ->
+            if (acc.isEmpty()) u else "$u,$acc"
         }
 
-        // getting a default value in case of no brokers. Avoiding nullable adminClient management
-        brokersURL = if (reqNoOfBrokers < 1) "PLAINTEXT://localhost:0000"
-        else kBrokers.map { it.url }
-                .foldRight("") { u, acc -> if (acc.isEmpty()) u else "$u,$acc" }
-
-        adminClient = AdminClient.create(
-                Properties().apply {
-                    set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
-                    set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
-                }
+        serverPark = ServerPark(
+                zk,
+                when (reqNoOfBrokers) {
+                    0 -> BrokerStatus.NotAvailable
+                    else -> BrokerStatus.Available(kBrokers, brokersURL)
+                },
+                when (withSchemaRegistry) {
+                    false -> SchemaRegistryStatus.NotAvailable
+                    else -> SchemaRegistryStatus.Available(SRServer(getAvailablePort(), brokersURL))
+                },
+                ServerParkStatus.Initialized
         )
-
-        val sr = if (withSchemaRegistry || withKSQL || withRest)
-            SRServer(getAvailablePort(), brokersURL) else EmptyShellServer()
-
-        val ksql = if (withKSQL) KSQLServer(getAvailablePort(), brokersURL, ksqlDir.absolutePath) else EmptyShellServer()
-
-        val r = if (withRest) KRServer(getAvailablePort(), brokersURL, sr.url) else EmptyShellServer()
-
-        serverPark = ServerPark(zk, kBrokers, sr, ksql, r)
 
         if (autoStart) start()
     }
+
+    val zookeeper get() = serverPark.zookeeper as ZKServer
+    val brokers get() = serverPark.getBrokers()
+    val adminClient get() = serverPark.getAdminClient()
+    val schemaRegistry get() = serverPark.getSchemaReg()
 
     /**
      * Start the kafka environment
      */
     fun start() {
-        serverPark.apply {
-            log.info { "Starting zookeeper - ${zookeeper.url}" }
-            zookeeper.start()
-            log.info { "Eventually starting kafka broker(s) - $brokersURL" }
-            brokers.forEach { it.start() }
-            log.info { "Eventually  starting schema registry - ${schemaregistry.url}" }
-            schemaregistry.start()
-            log.info { "Eventually starting rest server - ${rest.url}" }
-            rest.start()
-            log.info { "Eventually starting ksql server - ${ksql.url}" }
-            ksql.start()
+
+        when (serverPark.status) {
+            is ServerParkStatus.Started -> return
+            is ServerParkStatus.TearDownCompleted -> return
+            else -> {}
         }
-        createTopics(topics)
+
+        serverPark = serverPark.let { sp ->
+            log.info { "Starting zookeeper - ${sp.zookeeper.url}" }
+            sp.zookeeper.start()
+
+            when (sp.brokerStatus) {
+                is BrokerStatus.NotAvailable -> {}
+                is BrokerStatus.Available -> {
+                    log.info { "Starting kafka broker(s) - ${sp.brokerStatus.brokersURL}" }
+                    sp.brokerStatus.brokers.forEach { it.start() }
+                }
+            }
+
+            when (sp.schemaRegStatus) {
+                is SchemaRegistryStatus.NotAvailable -> {}
+                is SchemaRegistryStatus.Available -> {
+                    log.info { "Starting schema registry - ${sp.schemaRegStatus.schemaRegistry.url}" }
+                    sp.schemaRegStatus.schemaRegistry.start()
+                }
+            }
+
+            ServerPark(
+                    sp.zookeeper,
+                    sp.brokerStatus,
+                    sp.schemaRegStatus,
+                    ServerParkStatus.Started
+            )
+        }
+
+        if (serverPark.brokerStatus is BrokerStatus.Available &&
+                topics.isNotEmpty() &&
+                !topicsCreated) createTopics(topics)
     }
 
     /**
      * Stop the kafka environment
      */
-    fun stop() = serverPark.apply {
-        log.info { "Eventually stopping ksql server" }
-        ksql.stop()
-        log.info { "Eventually stopping rest server" }
-        rest.stop()
-        log.info { "Eventually stopping schema registry" }
-        schemaregistry.stop()
-        log.info { "Eventually stopping kafka broker(s)" }
-        brokers.forEach { it.stop() }
-        log.info { "Stopping zookeeper" }
-        zookeeper.stop()
+    fun stop() {
+
+        when (serverPark.status) {
+            is ServerParkStatus.Stopped -> return
+            is ServerParkStatus.TearDownCompleted -> return
+            else -> {}
+        }
+
+        serverPark = serverPark.let { sp ->
+            when (sp.schemaRegStatus) {
+                is SchemaRegistryStatus.NotAvailable -> { }
+                is SchemaRegistryStatus.Available -> {
+                    log.info { "Stopping schema registry - ${sp.schemaRegStatus.schemaRegistry.url}" }
+                    sp.schemaRegStatus.schemaRegistry.stop()
+                }
+            }
+            when (sp.brokerStatus) {
+                is BrokerStatus.NotAvailable -> {}
+                is BrokerStatus.Available -> {
+                    log.info { "Stopping kafka broker(s) - ${sp.brokerStatus.brokersURL}" }
+                    sp.brokerStatus.brokers.forEach { it.stop() }
+                }
+            }
+            log.info { "Stopping zookeeper" }
+            sp.zookeeper.stop()
+
+            ServerPark(
+                    sp.zookeeper,
+                    sp.brokerStatus,
+                    sp.schemaRegStatus,
+                    ServerParkStatus.Stopped
+            )
+        }
     }
 
     /**
-     * Tear down the kafka environment, removing all data created in environment session
+     * Tear down the kafka environment, removing all data created in environment
      */
     fun tearDown() {
-        stop()
+
+        when (serverPark.status) {
+            is ServerParkStatus.TearDownCompleted -> return
+            is ServerParkStatus.Started -> stop()
+            else -> {}
+        }
+
         try { FileUtils.deleteDirectory(zkDataDir) } catch (e: IOException) { /* tried at least */ }
         try { FileUtils.deleteDirectory(kbLDirRoot) } catch (e: IOException) { /* tried at least */ }
-        try { FileUtils.deleteDirectory(ksqlDir) } catch (e: IOException) { /* tried at least */ }
+
+        serverPark = ServerPark(
+                serverPark.zookeeper,
+                BrokerStatus.NotAvailable,
+                SchemaRegistryStatus.NotAvailable,
+                ServerParkStatus.TearDownCompleted
+        )
     }
 
     // see the following link for creating topic
@@ -176,17 +277,16 @@ class KafkaEnvironment(
 
     private fun createTopics(topics: List<String>) {
 
-        if (topicsCreated || topics.isEmpty()) return
+        // this func is only invoked if broker(s) are available and started
 
-        if (!topicsCreated && serverPark.brokers.isEmpty()) {
-            topicsCreated = true
-            return
+        val brokers = (serverPark.brokerStatus as BrokerStatus.Available).brokers
+
+        val noPartitions = brokers.size
+        val replFactor = brokers.size
+
+        serverPark.getAdminClient()?.use { ac ->
+            ac.createTopics(topics.map { name -> NewTopic(name, noPartitions, replFactor.toShort()) })
         }
-
-        val noPartitions = serverPark.brokers.size
-        val replFactor = serverPark.brokers.size
-
-        adminClient.createTopics(topics.map { NewTopic(it, noPartitions, replFactor.toShort()) })
 
         topicsCreated = true
     }
