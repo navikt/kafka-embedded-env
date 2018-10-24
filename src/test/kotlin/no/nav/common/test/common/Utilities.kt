@@ -130,8 +130,6 @@ fun createConsumerACL(topic: String, user: String): List<AclBinding> {
                     )
             )
     )
-
-
 }
 
 fun kafkaProduce(brokersURL: String, topic: String, user: String, pwd: String, data: List<String>): Boolean =
@@ -158,11 +156,9 @@ fun kafkaProduce(brokersURL: String, topic: String, user: String, pwd: String, d
                     }
                     true
                 }
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
         println("PRODUCE EXCEPTION")
         false }
-
 
 fun kafkaConsume(brokersURL: String, topic: String, user: String, pwd: String, lastEvent: String): List<String> =
         try {
@@ -170,7 +166,7 @@ fun kafkaConsume(brokersURL: String, topic: String, user: String, pwd: String, l
                     Properties().apply {
                         set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
                         set(ConsumerConfig.CLIENT_ID_CONFIG, "funKafkaConsume")
-                        set(ConsumerConfig.GROUP_ID_CONFIG,"funKafkaConsumeGrpID")
+                        set(ConsumerConfig.GROUP_ID_CONFIG, "funKafkaConsumeGrpID")
                         set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
                         set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
                         set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
@@ -196,12 +192,7 @@ fun kafkaConsume(brokersURL: String, topic: String, user: String, pwd: String, l
 
                         lOfEvents
                     }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             println("CONSUME EXCEPTION")
             emptyList()
         }
-
-
-
-

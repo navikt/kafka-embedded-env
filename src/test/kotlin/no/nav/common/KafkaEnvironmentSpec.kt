@@ -174,7 +174,7 @@ object KafkaEnvironmentSpec : Spek({
     describe("kafka environment with min Security, 1 broker and one topic") {
 
         val topic = "basic01"
-        val kEnv3 =  KafkaEnvironment(noOfBrokers = 1, topics = listOf(topic), minSecurity = true)
+        val kEnv3 = KafkaEnvironment(noOfBrokers = 1, topics = listOf(topic), minSecurity = true)
 
         val events = (1..9).map { "event$it" }
 
@@ -211,7 +211,6 @@ object KafkaEnvironmentSpec : Spek({
                     true
                 } catch (e: Exception) { false } shouldEqualTo true
             }
-
         }
 
         it("should send all events $events to topic '$topic'") {
@@ -238,6 +237,5 @@ object KafkaEnvironmentSpec : Spek({
             adminClient.close()
             kEnv3.tearDown()
         }
-
     }
 })
