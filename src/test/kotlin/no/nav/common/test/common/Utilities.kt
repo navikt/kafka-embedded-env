@@ -6,7 +6,11 @@ import io.ktor.client.request.get
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.withTimeoutOrNull
+import no.nav.common.JAAS_REQUIRED
+import no.nav.common.JAAS_PLAIN_LOGIN
 import no.nav.common.embeddedutils.ServerBase
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -27,9 +31,23 @@ import java.util.Properties
 
 // some kafka broker test utilities
 
-val noOfBrokers: (AdminClient) -> Int = { it.describeCluster().nodes().get().toList().size }
-val noOfTopics: (AdminClient) -> Int = { it.listTopics().names().get().toList().size }
-val topics: (AdminClient) -> List<String> = { it.listTopics().names().get().toList() }
+data class TxtCmdRes(val txt: String, val cmd: (AdminClient?) -> Int, val res: Int)
+
+fun AdminClient?.noOfBrokers(): Int = try {
+    this?.describeCluster()?.nodes()?.get()?.toList()?.size ?: -1
+} catch (e: Exception) { -1 }
+
+val noOfBrokers: (AdminClient?) -> Int = { it.noOfBrokers() }
+
+fun AdminClient?.noOfTopics(): Int = try {
+    this?.listTopics()?.names()?.get()?.toList()?.size ?: -1
+} catch (e: Exception) { -1 }
+
+val noOfTopics: (AdminClient?) -> Int = { it.noOfTopics() }
+
+fun AdminClient?.topics(): List<String> = try {
+    this?.listTopics()?.names()?.get()?.toList() ?: emptyList()
+} catch (e: Exception) { emptyList() }
 
 // some schema registry test utilities
 
@@ -51,88 +69,44 @@ suspend fun HttpClient.getSomething(endpoint: URL): String =
 val httpReqResp: (HttpClient, ServerBase, String) -> String = { client, sr, path ->
     try {
         runBlocking { client.getSomething(URL(sr.url + path)) }
-    } catch (e: Exception) {
-        e.javaClass.name
-    }
+    } catch (e: Exception) { e.javaClass.name }
 }
 
 // some kafka environment test utilities
 
-fun createProducerACL(topic: String, user: String): List<AclBinding> {
+fun createProducerACL(topicUser: Map<String, String>): List<AclBinding> =
+        topicUser.flatMap {
+            val (topic, user) = it
 
-    val resourcePattern = ResourcePattern(ResourceType.TOPIC, topic, PatternType.LITERAL)
-    val principal = "User:$user"
-    val host = "*"
+            listOf(AclOperation.DESCRIBE, AclOperation.WRITE, AclOperation.CREATE).let { lOp ->
 
-    return listOf(
-            AclBinding(
-                    resourcePattern,
-                    AccessControlEntry(
-                            principal,
-                            host,
-                            AclOperation.DESCRIBE,
-                            AclPermissionType.ALLOW
-                    )
-            ),
-            AclBinding(
-                    resourcePattern,
-                    AccessControlEntry(
-                            principal,
-                            host,
-                            AclOperation.WRITE,
-                            AclPermissionType.ALLOW
-                    )
-            ),
-            AclBinding(
-                    resourcePattern,
-                    AccessControlEntry(
-                            principal,
-                            host,
-                            AclOperation.CREATE,
-                            AclPermissionType.ALLOW
-                    )
-            )
-    )
-}
-fun createConsumerACL(topic: String, user: String): List<AclBinding> {
+                val tPattern = ResourcePattern(ResourceType.TOPIC, topic, PatternType.LITERAL)
+                val principal = "User:$user"
+                val host = "*"
+                val allow = AclPermissionType.ALLOW
 
-    val topicPattern = ResourcePattern(ResourceType.TOPIC, topic, PatternType.LITERAL)
-    val groupPattern = ResourcePattern(ResourceType.GROUP, "*", PatternType.LITERAL)
-    val principal = "User:$user"
-    val host = "*"
+                lOp.map { op -> AclBinding(tPattern, AccessControlEntry(principal, host, op, allow)) }
+            }
+        }
 
-    return listOf(
-            AclBinding(
-                    topicPattern,
-                    AccessControlEntry(
-                            principal,
-                            host,
-                            AclOperation.DESCRIBE,
-                            AclPermissionType.ALLOW
-                    )
-            ),
-            AclBinding(
-                    topicPattern,
-                    AccessControlEntry(
-                            principal,
-                            host,
-                            AclOperation.READ,
-                            AclPermissionType.ALLOW
-                    )
-            ),
-            AclBinding(
-                    groupPattern,
-                    AccessControlEntry(
-                            principal,
-                            host,
-                            AclOperation.READ,
-                            AclPermissionType.ALLOW
-                    )
-            )
-    )
-}
+fun createConsumerACL(topicUser: Map<String, String>): List<AclBinding> =
+        topicUser.flatMap {
+            val (topic, user) = it
 
-fun kafkaProduce(brokersURL: String, topic: String, user: String, pwd: String, data: List<String>): Boolean =
+            listOf(AclOperation.DESCRIBE, AclOperation.READ).let { lOp ->
+
+                val tPattern = ResourcePattern(ResourceType.TOPIC, topic, PatternType.LITERAL)
+                val gPattern = ResourcePattern(ResourceType.GROUP, "*", PatternType.LITERAL)
+                val principal = "User:$user"
+                val host = "*"
+                val allow = AclPermissionType.ALLOW
+
+                lOp.map { op -> AclBinding(tPattern, AccessControlEntry(principal, host, op, allow)) } +
+                        AclBinding(gPattern, AccessControlEntry(principal, host, AclOperation.READ, allow))
+            }
+        }
+
+suspend fun kafkaProduce(brokersURL: String, topic: String, user: String, pwd: String, data: Map<String, String>): Boolean =
     try {
         KafkaProducer<String, String>(
                 Properties().apply {
@@ -145,23 +119,27 @@ fun kafkaProduce(brokersURL: String, topic: String, user: String, pwd: String, d
                     set(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500)
                     set("security.protocol", "SASL_PLAINTEXT")
                     set("sasl.mechanism", "PLAIN")
-                    set("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required " +
-                            "username=\"$user\" password=\"$pwd\";")
+                    set("sasl.jaas.config", "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
                 }
         )
                 .use { p ->
-                    data.forEach { e ->
-                        val info = p.send(ProducerRecord(topic, "", e)).get()
-                        println("Producer kafka event details: [${info.topic()},${info.partition()},${info.offset()}]")
-                    }
-                    true
-                }
-    } catch (e: Exception) {
-        println("PRODUCE EXCEPTION")
-        false }
 
-fun kafkaConsume(brokersURL: String, topic: String, user: String, pwd: String, lastEvent: String): List<String> =
+                    withTimeoutOrNull(10_000) {
+                        data.forEach { k, v -> p.send(ProducerRecord(topic, k, v)).get() }
+                        true
+                    } ?: false
+                }
+    } catch (e: Exception) { false }
+
+suspend fun kafkaConsume(
+    brokersURL: String,
+    topic: String,
+    user: String,
+    pwd: String,
+    noOfEvents: Int
+): Map<String, String> =
         try {
+
             KafkaConsumer<String, String>(
                     Properties().apply {
                         set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
@@ -171,28 +149,24 @@ fun kafkaConsume(brokersURL: String, topic: String, user: String, pwd: String, l
                         set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
                         set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
                         set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-                        set(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 3)
+                        set(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 4)
                         set("security.protocol", "SASL_PLAINTEXT")
                         set("sasl.mechanism", "PLAIN")
-                        set("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required " +
-                                "username=\"$user\" password=\"$pwd\";")
+                        set("sasl.jaas.config", "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
                     }
             )
                     .use { c ->
                         c.subscribe(listOf(topic))
 
-                        val lOfEvents = mutableListOf<String>()
+                        val fE = mutableMapOf<String, String>()
 
-                        (1..20).asSequence()
-                                .flatMap { _ ->
-                                    c.poll(Duration.ofMillis(1_000))
-                                            .map { e -> listOf(e.value().also { lOfEvents.add(it) }) }.asSequence()
-                                }
-                                .any { it == listOf(lastEvent) }
+                        withTimeoutOrNull(10_000) {
 
-                        lOfEvents
+                            while (fE.size < noOfEvents) {
+                                delay(100)
+                                c.poll(Duration.ofMillis(500)).forEach { e -> fE[e.key()] = e.value() }
+                            }
+                            fE
+                        } ?: emptyMap()
                     }
-        } catch (e: Exception) {
-            println("CONSUME EXCEPTION")
-            emptyList()
-        }
+        } catch (e: Exception) { emptyMap() }

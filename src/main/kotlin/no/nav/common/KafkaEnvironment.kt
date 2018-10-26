@@ -1,6 +1,5 @@
 package no.nav.common
 
-import mu.KotlinLogging
 import no.nav.common.embeddedkafka.KBServer
 import no.nav.common.embeddedschemaregistry.SRServer
 import no.nav.common.embeddedutils.ServerBase
@@ -22,31 +21,35 @@ import java.util.UUID
  * @param topics a list of topics to create at environment startup - default empty
  * @param withSchemaRegistry optional schema registry - default false
  * @param autoStart start servers immediately - default false
- * @param minSecurity gives minimum plain security (authentication and authorization)
+ * @param withSecurity gives SASL plain security (authentication and authorization)
+ * @param users add custom users for authentication and authorization. Only relevant when withSecurity enabled
  *
  * If noOfBrokers is zero, non-empty topics or withSchemaRegistry as true, will automatically include one broker
- *
- * minSecurity is a special feature for testing kafka adminRest API only
  *
  * A [serverPark] property is available for custom management of servers
  *
  * Observe that serverPark is 'cumbersome' due to different configuration options,
  * with or without brokers and schema registry. AdminClient is depended on started brokers
  *
- * Some helper properties are available in order to ease the state management. Observe values depend on state
+ * Some helper properties are available in order to ease the state management. Observe(!) values depend on state
  * [zookeeper] property
  * [brokers] property - relevant iff broker(s) included in config
+ * [brokersURL] property - relevant iff broker(s) included in config
  * [adminClient] property - relevant iff broker(s) included in config. and serverPark started
  * [schemaRegistry] property - relevant iff schema reg included in config and serverPark started
  *
  */
+
+// private val logger = KotlinLogging.logger {}
+
 class KafkaEnvironment(
     noOfBrokers: Int = 1,
     val topics: List<String> = emptyList(),
     withSchemaRegistry: Boolean = false,
-    autoStart: Boolean = false,
-    private val minSecurity: Boolean = false
-) {
+    val withSecurity: Boolean = false,
+    users: List<JAASCredential> = emptyList(),
+    autoStart: Boolean = false
+) : AutoCloseable {
 
     sealed class BrokerStatus {
         data class Available(
@@ -61,11 +64,10 @@ class KafkaEnvironment(
                     Properties().apply {
                         set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
                         set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
-                        if (minSecurity) {
+                        if (withSecurity) {
                             set("security.protocol", "SASL_PLAINTEXT")
                             set("sasl.mechanism", "PLAIN")
-                            // see JAASContext object
-                            set("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required " +
+                            set("sasl.jaas.config", "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED " +
                                     "username=\"${kafkaClient.username}\" password=\"${kafkaClient.password}\";")
                         }
                     }
@@ -99,6 +101,11 @@ class KafkaEnvironment(
     private fun ServerPark.getBrokers(): List<ServerBase> = when (brokerStatus) {
         is BrokerStatus.Available -> brokerStatus.brokers
         else -> emptyList()
+    }
+
+    private fun ServerPark.getBrokersURL(): String = when (brokerStatus) {
+        is BrokerStatus.Available -> brokerStatus.brokersURL
+        else -> ""
     }
 
     private fun ServerPark.getSchemaReg(): ServerBase? = when (schemaRegStatus) {
@@ -136,12 +143,15 @@ class KafkaEnvironment(
 
     // initialize servers and start, creation of topics
     init {
-        if (minSecurity) JAASContext.setUp()
+        if (withSecurity) {
+            JAASCustomUsers.addUsers(users)
+            setUpJAASContext()
+        }
 
-        val zk = ZKServer(getAvailablePort(), zkDataDir, minSecurity)
+        val zk = ZKServer(getAvailablePort(), zkDataDir, withSecurity)
 
         val kBrokers = (0 until reqNoOfBrokers).map {
-            KBServer(getAvailablePort(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url, minSecurity)
+            KBServer(getAvailablePort(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url, withSecurity)
         }
         val brokersURL = kBrokers.map { it.url }.foldRight("") { u, acc ->
             if (acc.isEmpty()) u else "$u,$acc"
@@ -163,8 +173,10 @@ class KafkaEnvironment(
         if (autoStart) start()
     }
 
+    // ease of state management by properties
     val zookeeper get() = serverPark.zookeeper as ZKServer
     val brokers get() = serverPark.getBrokers()
+    val brokersURL get() = serverPark.getBrokersURL()
     val adminClient get() = serverPark.getAdminClient()
     val schemaRegistry get() = serverPark.getSchemaReg()
 
@@ -180,13 +192,11 @@ class KafkaEnvironment(
         }
 
         serverPark = serverPark.let { sp ->
-            log.info { "Starting zookeeper - ${sp.zookeeper.url}" }
             sp.zookeeper.start()
 
             when (sp.brokerStatus) {
                 is BrokerStatus.NotAvailable -> {}
                 is BrokerStatus.Available -> {
-                    log.info { "Starting kafka broker(s) - ${sp.brokerStatus.brokersURL}" }
                     sp.brokerStatus.brokers.forEach { it.start() }
                 }
             }
@@ -194,7 +204,6 @@ class KafkaEnvironment(
             when (sp.schemaRegStatus) {
                 is SchemaRegistryStatus.NotAvailable -> {}
                 is SchemaRegistryStatus.Available -> {
-                    log.info { "Starting schema registry - ${sp.schemaRegStatus.schemaRegistry.url}" }
                     sp.schemaRegStatus.schemaRegistry.start()
                 }
             }
@@ -215,7 +224,7 @@ class KafkaEnvironment(
     /**
      * Stop the kafka environment
      */
-    fun stop() {
+    private fun stop() {
 
         when (serverPark.status) {
             is ServerParkStatus.Stopped -> return
@@ -227,18 +236,15 @@ class KafkaEnvironment(
             when (sp.schemaRegStatus) {
                 is SchemaRegistryStatus.NotAvailable -> { }
                 is SchemaRegistryStatus.Available -> {
-                    log.info { "Stopping schema registry - ${sp.schemaRegStatus.schemaRegistry.url}" }
                     sp.schemaRegStatus.schemaRegistry.stop()
                 }
             }
             when (sp.brokerStatus) {
                 is BrokerStatus.NotAvailable -> {}
                 is BrokerStatus.Available -> {
-                    log.info { "Stopping kafka broker(s) - ${sp.brokerStatus.brokersURL}" }
                     sp.brokerStatus.brokers.forEach { it.stop() }
                 }
             }
-            log.info { "Stopping zookeeper" }
             sp.zookeeper.stop()
 
             ServerPark(
@@ -272,6 +278,8 @@ class KafkaEnvironment(
         )
     }
 
+    override fun close() { tearDown() }
+
     // see the following link for creating topic
     // https://kafka.apache.org/20/javadoc/org/apache/kafka/clients/admin/AdminClient.html#createTopics-java.util.Collection-
 
@@ -289,9 +297,5 @@ class KafkaEnvironment(
         }
 
         topicsCreated = true
-    }
-
-    companion object {
-        val log = KotlinLogging.logger { }
     }
 }

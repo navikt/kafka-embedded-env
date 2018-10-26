@@ -17,10 +17,10 @@ const val ZOOKEEPER_FOURLEXCEPTION = "4LEXCEPTION"
 
 enum class ZookeeperCMDRSP(val cmd: String, val rsp: String) {
     RUOK("ruok", "imok\n"),
-    REQS("reqs", "")
+    REQS("reqs", "") // prerequisite is idle zookeeper
 }
 
-class ZKServer(override val port: Int, private val dataDir: File, private val minSecurity: Boolean) : ServerBase() {
+class ZKServer(override val port: Int, private val dataDir: File, private val withSecurity: Boolean) : ServerBase() {
 
     // see link for ZooKeeperServerMain below for starting up embeddedzookeeper
     // https://github.com/apache/zookeeper/blob/branch-3.4.13/src/java/main/org/apache/zookeeper/server/ZooKeeperServerMain.java
@@ -28,36 +28,26 @@ class ZKServer(override val port: Int, private val dataDir: File, private val mi
     override val url = "$host:$port"
 
     // not possible to stop and restart zookeeper, use core inner class
-    private class ZKS(port: Int, dataDir: File, minSecurity: Boolean) : ZooKeeperServerMain() {
+    private class ZKS(port: Int, dataDir: File, withSecurity: Boolean) : ZooKeeperServerMain() {
 
         private val propsBasic = Properties().apply {
             set("dataDir", dataDir.toString())
             set("clientPort", "$port")
             set("maxClientCnxns", "0")
-        }
-
-        private val propsWSecurity = Properties().apply {
-            set("dataDir", dataDir.toString())
-            set("clientPort", "$port")
-            set("maxClientCnxns", "0")
-            set("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider")
-            set("requireClientAuthScheme", "sasl")
-            set("jaasLoginRenew", "3600000")
-        }
-
-        private val propFile = "$dataDir/embeddedzk.properties"
-
-        init {
-            // go for exception if this is not working, implying no zookeeper
-            File(propFile).let { f ->
-                FileUtils.forceMkdir(dataDir)
-                FileOutputStream(f).use { out ->
-                    when (minSecurity) {
-                        false -> propsBasic.store(out, "")
-                        else -> propsWSecurity.store(out, "")
-                    }
-                }
+            if (withSecurity) {
+                set("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider")
+                set("requireClientAuthScheme", "sasl")
+                set("jaasLoginRenew", "3600000")
             }
+        }
+
+        private val propFile = "$dataDir/embeddedzk.properties".also { fName ->
+            try {
+                File(fName).let { f ->
+                    FileUtils.forceMkdir(dataDir)
+                    FileOutputStream(f).use { out -> propsBasic.store(out, "") }
+                }
+            } catch (e: Exception) { /*  will get error when starting zookeeper */ }
         }
 
         private fun start() {
@@ -81,7 +71,7 @@ class ZKServer(override val port: Int, private val dataDir: File, private val mi
 
     override fun start() = when (status) {
         ServerStatus.NotRunning -> {
-            zk.add(ZKS(port, dataDir, minSecurity))
+            zk.add(ZKS(port, dataDir, withSecurity))
             waitForZookeeperOk()
             status = ServerStatus.Running
         }

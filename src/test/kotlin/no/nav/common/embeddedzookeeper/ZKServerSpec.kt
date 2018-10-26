@@ -1,7 +1,7 @@
 package no.nav.common.embeddedzookeeper
 
-import no.nav.common.JAASContext
 import no.nav.common.embeddedutils.getAvailablePort
+import no.nav.common.setUpJAASContext
 import org.amshove.kluent.shouldBeEqualTo
 import org.apache.commons.io.FileUtils
 import org.spekframework.spek2.Spek
@@ -29,7 +29,7 @@ object ZKServerSpec : Spek({
         }
     }
 
-    describe("zookeeper server tests without minSecurity") {
+    describe("zookeeper server tests without withSecurity") {
 
         val minSecurity = false
         val zk = ZKServer(getAvailablePort(), zkDataDir, minSecurity)
@@ -37,10 +37,10 @@ object ZKServerSpec : Spek({
         (1..2).forEach { testZKCmds(this, zk, it) }
     }
 
-    describe("zookeeper server tests with minSecurity") {
+    describe("zookeeper server tests with withSecurity") {
 
         val minSecurity = true
-        JAASContext.setUp()
+        setUpJAASContext()
 
         val zk = ZKServer(getAvailablePort(), zkDataDir, minSecurity)
 

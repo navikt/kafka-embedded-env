@@ -19,21 +19,21 @@ class KBServer(
     noPartitions: Int,
     logDir: File,
     zkURL: String,
-    minSecurity: Boolean
+    withSecurity: Boolean
 ) : ServerBase() {
 
     // see link for KafkaServerStartable below for starting up an embedded kafka broker
     // https://github.com/apache/kafka/blob/2.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
 
-    override val url = if (minSecurity) "SASL_PLAINTEXT://$host:$port" else "PLAINTEXT://$host:$port"
+    override val url = if (withSecurity) "SASL_PLAINTEXT://$host:$port" else "PLAINTEXT://$host:$port"
 
     private val broker = KafkaServer(
-            KafkaConfig(getDefaultProps(id, zkURL, noPartitions, logDir, minSecurity)),
+            KafkaConfig(getDefaultProps(id, zkURL, noPartitions, logDir, withSecurity)),
             Time.SYSTEM,
             Option.apply(""),
             KafkaMetricsReporter.startReporters(
                     VerifiableProperties(
-                            getDefaultProps(id, zkURL, noPartitions, logDir, minSecurity)
+                            getDefaultProps(id, zkURL, noPartitions, logDir, withSecurity)
                     )
             )
     )
@@ -60,24 +60,23 @@ class KBServer(
         zkURL: String,
         noPartitions: Int,
         logDir: File,
-        minSecurity: Boolean
+        withSecurity: Boolean
     ) = Properties().apply {
 
         // see link below for details - trying to make lean embedded embeddedkafka broker
         // https://kafka.apache.org/documentation/#brokerconfigs
 
-        if (minSecurity) {
+        if (withSecurity) {
             set("security.inter.broker.protocol", "SASL_PLAINTEXT")
             set("sasl.mechanism.inter.broker.protocol", "PLAIN")
             set("sasl.enabled.mechanisms", "PLAIN")
-            // set("listener.name.sasl_plaintext.plain.sasl.server.callback.handler.class", "")
             set("authorizer.class.name", "kafka.security.auth.SimpleAclAuthorizer")
-            // see JAASContext object
             set("super.users", "User:${kafkaAdmin.username};User:${kafkaClient.username}")
             // allow.everyone.if.no.acl.found=true
             // auto.create.topics.enable=false
             set("zookeeper.set.acl", "true")
         }
+        set(KafkaConfig.AutoCreateTopicsEnableProp(), (!withSecurity).toString())
 
         set(KafkaConfig.ZkConnectProp(), zkURL)
         set(KafkaConfig.ZkConnectionTimeoutMsProp(), 500)
@@ -109,8 +108,6 @@ class KBServer(
 
         // set("log.dir", "/tmp/kafka-logs")
         set(KafkaConfig.LogDirsProp(), logDir.absolutePath)
-
-        set(KafkaConfig.AutoCreateTopicsEnableProp(), true.toString())
 
         set(KafkaConfig.NumRecoveryThreadsPerDataDirProp(), 1)
 

@@ -2,7 +2,9 @@ package no.nav.common
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
+import kotlinx.coroutines.experimental.runBlocking
 import no.nav.common.embeddedzookeeper.ZookeeperCMDRSP
+import no.nav.common.test.common.TxtCmdRes
 import no.nav.common.test.common.createConsumerACL
 import no.nav.common.test.common.createProducerACL
 import no.nav.common.test.common.httpReqResp
@@ -21,221 +23,384 @@ import org.spekframework.spek2.style.specification.describe
 
 object KafkaEnvironmentSpec : Spek({
 
-    lateinit var adminClient: AdminClient // used across describes, closed after use
-
-    val basicTests: (Int, List<String>) -> List<Triple<String, (AdminClient) -> Int, Int>> = { nB, t ->
-        listOf(
-            Triple("should have '$nB' of broker(s)", noOfBrokers, nB),
-            Triple("should have '${t.size}' topics available", noOfTopics, t.size)
-        )
-    }
+    fun getTests(noBrokers: Int, topics: List<String>): List<TxtCmdRes> = listOf(
+            TxtCmdRes("should have '$noBrokers' of broker(s)", noOfBrokers, noBrokers),
+            TxtCmdRes("should have '${topics.size}' topics available", noOfTopics, topics.size)
+    )
 
     describe("default kafka environment") {
 
-        val keDefault = KafkaEnvironment()
+        val topics = emptyList<String>()
+        val env = KafkaEnvironment()
+        var ac: AdminClient? = null
 
-        beforeGroup {
-            keDefault.start()
-            adminClient = keDefault.adminClient!!
+        before {
+            env.start()
+            ac = env.adminClient
         }
 
         context("basic verification") {
 
             it("should have 1 zookeeper with status ok") {
-                keDefault.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
+                env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            basicTests(1, emptyList()).forEach { it(it.first) { it.second(adminClient) shouldEqualTo it.third } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        afterGroup {
-            adminClient.close()
-            keDefault.tearDown()
+        after {
+            ac?.close()
+            env.tearDown()
         }
     }
 
     describe("basic kafka environment") {
 
-        val basicTopics = listOf("basic01", "basic02")
-        val keBasic = KafkaEnvironment(topics = basicTopics)
+        val topics = listOf("basic01", "basic02")
+        val env = KafkaEnvironment(topics = topics)
+        var ac: AdminClient? = null
 
-        beforeGroup {
-            keBasic.start()
-            adminClient = keBasic.adminClient!!
+        before {
+            env.start()
+            ac = env.adminClient
         }
 
         context("basic verification") {
 
             it("should have 1 zookeeper with status ok") {
-                keBasic.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
+                env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            basicTests(1, basicTopics).forEach { it(it.first) { it.second(adminClient) shouldEqualTo it.third } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        it("should have topics $basicTopics available") {
-            topics(adminClient) shouldContainAll basicTopics
+        it("should have topic(s) $topics available") {
+            ac.topics() shouldContainAll topics
         }
 
-        afterGroup {
-            adminClient.close()
-            keBasic.tearDown()
+        after {
+            ac?.close()
+            env.tearDown()
+        }
+    }
+
+    describe("kafka environment with 3 broker(s)") {
+
+        val env = KafkaEnvironment(noOfBrokers = 3)
+
+        before {
+            env.start()
+        }
+
+        it("should have 1 zookeeper with status ok") {
+            env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
+        }
+
+        it("should have maximum of 2 broker(s)") {
+            env.brokers.size shouldEqualTo 2
+        }
+
+        after {
+            env.tearDown()
         }
     }
 
     describe("kafka environment with 0 broker(s)") {
 
-        val kEnv0 = KafkaEnvironment(noOfBrokers = 0)
+        val env = KafkaEnvironment(noOfBrokers = 0)
 
-        beforeGroup {
-            kEnv0.start()
+        before {
+            env.start()
         }
 
         it("should have 1 zookeeper with status ok") {
-            kEnv0.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
+            env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
         }
 
         it("should have 0 broker") {
-            kEnv0.brokers.size shouldEqualTo 0
+            env.brokers.size shouldEqualTo 0
         }
 
-        afterGroup {
-            kEnv0.tearDown()
+        after {
+            env.tearDown()
         }
     }
 
     describe("kafka environment with 0 brokers and schema registry") {
 
-        val schema = listOf("_schemas")
-        val kEnv1 = KafkaEnvironment(noOfBrokers = 0, withSchemaRegistry = true)
+        val topics = listOf("_schemas") // automatically created by schema registry
+        val env = KafkaEnvironment(noOfBrokers = 0, withSchemaRegistry = true)
+        var ac: AdminClient? = null
         val client = HttpClient(Apache)
 
-        beforeGroup {
-            kEnv1.start()
-            adminClient = kEnv1.adminClient!!
+        before {
+            env.start()
+            ac = env.adminClient
         }
 
         context("basic verification") {
 
             it("should have 1 zookeeper with status ok") {
-                kEnv1.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
+                env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            basicTests(1, schema).forEach { it(it.first) { it.second(adminClient) shouldEqualTo it.third } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        it("should have topic(s) $schema available") {
+        it("should have topic(s) $topics available") {
 
-            topics(adminClient) shouldContainAll schema
+            ac.topics() shouldContainAll topics
         }
 
         context("schema reg") {
 
             scRegTests.forEach { txt, cmdRes ->
-                it(txt) { httpReqResp(client, kEnv1.schemaRegistry!!, cmdRes.first) shouldBeEqualTo cmdRes.second }
+                it(txt) { httpReqResp(client, env.schemaRegistry!!, cmdRes.first) shouldBeEqualTo cmdRes.second }
             }
         }
 
-        afterGroup {
-            adminClient.close()
-            kEnv1.tearDown()
+        after {
+            ac?.close()
+            env.tearDown()
         }
     }
 
     describe("kafka environment with 0 brokers and 2 topics") {
 
-        val basicTopics = listOf("basic01", "basic02")
-        val kEnv2 = KafkaEnvironment(noOfBrokers = 0, topics = basicTopics)
+        val topics = listOf("basic01", "basic02")
+        val env = KafkaEnvironment(noOfBrokers = 0, topics = topics)
+        var ac: AdminClient? = null
 
-        beforeGroup {
-            kEnv2.start()
-            adminClient = kEnv2.adminClient!!
+        before {
+            env.start()
+            ac = env.adminClient
         }
 
         context("basic verification") {
 
             it("should have 1 zookeeper with status ok") {
-                kEnv2.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
+                env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            basicTests(1, basicTopics).forEach { it(it.first) { it.second(adminClient) shouldEqualTo it.third } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        it("should have topic(s) $basicTopics available") {
-            topics(adminClient) shouldContainAll basicTopics
+        it("should have topic(s) $topics available") {
+            ac.topics() shouldContainAll topics
         }
 
-        afterGroup {
-            adminClient.close()
-            kEnv2.tearDown()
+        after {
+            ac?.close()
+            env.tearDown()
         }
     }
 
-    describe("kafka environment with min Security, 1 broker and one topic") {
+    describe("kafka environment with security, custom JAASCredential") {
 
-        val topic = "basic01"
-        val kEnv3 = KafkaEnvironment(noOfBrokers = 1, topics = listOf(topic), minSecurity = true)
+        val prod = JAASCredential("myP1", "myP1p")
+        val cons = JAASCredential("myC1", "myC1p")
+        val users = listOf(prod, cons)
+        val topics = listOf("custom01")
+        val env = KafkaEnvironment(noOfBrokers = 1, topics = topics, withSecurity = true, users = users)
+        var ac: AdminClient? = null
 
-        val events = (1..9).map { "event$it" }
+        val events = (1..9).map { "$it" to "event$it" }.toMap()
 
-        beforeGroup {
-            kEnv3.start()
-            adminClient = kEnv3.adminClient!!
+        before {
+            env.start()
+            ac = env.adminClient
         }
 
         context("basic verification") {
 
             it("should have 1 zookeeper with status ok") {
-                kEnv3.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
+                env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            basicTests(1, listOf(topic)).forEach { it(it.first) { it.second(adminClient) shouldEqualTo it.third } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        it("should have topic(s) '$topic' available") {
-            topics(adminClient) shouldContainAll listOf(topic)
+        it("should have topic(s) '$topics' available") {
+            ac.topics() shouldContainAll topics
         }
 
         context("generate required producer and consumer ACLs for topic") {
 
             it("should successfully create producer ACL") {
-                try {
-                    adminClient.createAcls(createProducerACL(topic, kafkaP1.username)).all().get()
-                    true
-                } catch (e: Exception) { false } shouldEqualTo true
+                ac?.let {
+                    try {
+                        it.createAcls(createProducerACL(mapOf(topics.first() to prod.username))).all().get()
+                        true
+                    } catch (e: Exception) { false }
+                } ?: false shouldEqualTo true
             }
 
             it("should successfully create consumer ACL") {
-                try {
-                    adminClient.createAcls(createConsumerACL(topic, kafkaC1.username)).all().get()
-                    true
-                } catch (e: Exception) { false } shouldEqualTo true
+                ac?.let {
+                    try {
+                        it.createAcls(createConsumerACL(mapOf(topics.first() to cons.username))).all().get()
+                        true
+                    } catch (e: Exception) { false } } ?: false shouldEqualTo true
             }
         }
 
-        it("should send all events $events to topic '$topic'") {
-            kafkaProduce(
-                    (kEnv3.serverPark.brokerStatus as KafkaEnvironment.BrokerStatus.Available).brokersURL,
-                    topic,
-                    kafkaP1.username,
-                    kafkaP1.password,
-                    events) shouldEqualTo true
+        it("should send all events $events to topic '$topics'") {
+            runBlocking {
+                kafkaProduce(
+                        env.brokersURL,
+                        topics.first(),
+                        prod.username,
+                        prod.password,
+                        events)
+            } shouldEqualTo true
         }
 
-        it("should consume all events $events from topic '$topic'") {
-            val fetchedEvents = kafkaConsume(
-                    (kEnv3.serverPark.brokerStatus as KafkaEnvironment.BrokerStatus.Available).brokersURL,
-                    topic,
-                    kafkaC1.username,
-                    kafkaC1.password,
-                    events.last())
-
-            fetchedEvents shouldContainAll events
+        it("should consume all events $events from topic '$topics'") {
+            runBlocking {
+                kafkaConsume(
+                        env.brokersURL,
+                        topics.first(),
+                        cons.username,
+                        cons.password,
+                        events.size)
+            } shouldContainAll events
         }
 
-        afterGroup {
-            adminClient.close()
-            kEnv3.tearDown()
+        after {
+            ac?.close()
+            env.tearDown()
+        }
+    }
+
+    describe("kafka environment with security, invalid JAASCredential") {
+
+        val prod = JAASCredential("invalidP1", "invP1p")
+        val cons = JAASCredential("invalidC1", "invC1p")
+        val topics = listOf("invalid01")
+        val env = KafkaEnvironment(noOfBrokers = 1, topics = topics, withSecurity = true) // not adding users
+        var ac: AdminClient? = null
+
+        val events = (1..9).map { "$it" to "event$it" }.toMap()
+
+        before {
+            env.start()
+            ac = env.adminClient
+        }
+
+        it("should have topic(s) '$topics' available") {
+            ac.topics() shouldContainAll topics
+        }
+
+        context("generate required producer and consumer ACLs for topic") {
+
+            it("should successfully create producer ACL") {
+                ac?.let {
+                    try {
+                        it.createAcls(createProducerACL(mapOf(topics.first() to prod.username))).all().get()
+                        true
+                    } catch (e: Exception) { false }
+                } ?: false shouldEqualTo true
+            }
+
+            it("should successfully create consumer ACL") {
+                ac?.let {
+                    try {
+                        it.createAcls(createConsumerACL(mapOf(topics.first() to cons.username))).all().get()
+                        true
+                    } catch (e: Exception) { false } } ?: false shouldEqualTo true
+            }
+        }
+
+        it("should not send any events $events to topic '$topics'") {
+            runBlocking {
+                kafkaProduce(
+                        env.brokersURL,
+                        topics.first(),
+                        prod.username,
+                        prod.password,
+                        events)
+            } shouldEqualTo false
+        }
+
+        it("should not consume any events $events from topic '$topics'") {
+            runBlocking {
+                kafkaConsume(
+                        env.brokersURL,
+                        topics.first(),
+                        cons.username,
+                        cons.password,
+                        events.size)
+            } shouldContainAll emptyMap()
+        }
+
+        after {
+            ac?.close()
+            env.tearDown()
+        }
+    }
+
+    describe("kafka environment with security, predefined JAASCredential") {
+
+        val topics = listOf("basic01")
+        val env = KafkaEnvironment(noOfBrokers = 1, topics = topics, withSecurity = true)
+        var ac: AdminClient? = null
+
+        val events = (1..9).map { "$it" to "event$it" }.toMap()
+
+        before {
+            env.start()
+            ac = env.adminClient
+        }
+
+        it("should have topic(s) '$topics' available") {
+            ac.topics() shouldContainAll topics
+        }
+
+        context("generate required producer and consumer ACLs for topic") {
+
+            it("should successfully create producer ACL") {
+                ac?.let {
+                    try {
+                        it.createAcls(createProducerACL(mapOf(topics.first() to kafkaP1.username))).all().get()
+                        true
+                    } catch (e: Exception) { false }
+                } ?: false shouldEqualTo true
+            }
+
+            it("should successfully create consumer ACL") {
+                ac?.let {
+                    try {
+                        it.createAcls(createConsumerACL(mapOf(topics.first() to kafkaC1.username))).all().get()
+                        true
+                    } catch (e: Exception) { false } } ?: false shouldEqualTo true
+            }
+        }
+
+        it("should send all events $events to topic '$topics'") {
+            runBlocking {
+                kafkaProduce(
+                        env.brokersURL,
+                        topics.first(),
+                        kafkaP1.username,
+                        kafkaP1.password,
+                        events)
+            } shouldEqualTo true
+        }
+
+        it("should consume all events $events from topic '$topics'") {
+            runBlocking {
+                kafkaConsume(
+                        env.brokersURL,
+                        topics.first(),
+                        kafkaC1.username,
+                        kafkaC1.password,
+                        events.size)
+            } shouldContainAll events
+        }
+
+        after {
+            ac?.close()
+            env.tearDown()
         }
     }
 })
