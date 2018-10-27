@@ -15,8 +15,11 @@ import no.nav.common.test.common.noOfTopics
 import no.nav.common.test.common.scRegTests
 import no.nav.common.test.common.topics
 import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldBeGreaterOrEqualTo
 import org.amshove.kluent.shouldContainAll
+import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldEqualTo
+import org.amshove.kluent.shouldNotBe
 import org.apache.kafka.clients.admin.AdminClient
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -34,23 +37,67 @@ object KafkaEnvironmentSpec : Spek({
         val env = KafkaEnvironment()
         var ac: AdminClient? = null
 
-        before {
-            env.start()
-            ac = env.adminClient
+        context("state tests - Initialized") {
+
+            it("should have state initialized for ServerPark") {
+                env.serverPark.status shouldEqual KafkaEnvironment.ServerParkStatus.Initialized
+            }
+
+            it("should have state Available for brokerStatus") {
+                env.serverPark.brokerStatus shouldNotBe KafkaEnvironment.BrokerStatus.NotAvailable
+                env.brokers.size shouldEqualTo 1
+                env.brokersURL.length shouldBeGreaterOrEqualTo 1
+            }
+
+            it("should return null for adminClient") {
+                env.adminClient shouldEqual null
+            }
+
+            it("should have state NotAvailable for schemaRegStatus") {
+                env.serverPark.schemaRegStatus shouldEqual KafkaEnvironment.SchemaRegistryStatus.NotAvailable
+            }
         }
 
         context("basic verification") {
+
+            before {
+                env.start()
+                ac = env.adminClient
+            }
+
+            it("should have state Started for ServerPark") {
+                env.serverPark.status shouldEqual KafkaEnvironment.ServerParkStatus.Started
+            }
 
             it("should have 1 zookeeper with status ok") {
                 env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
             getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+
+            after {
+                ac?.close()
+                env.tearDown()
+            }
         }
 
-        after {
-            ac?.close()
-            env.tearDown()
+        context("state tests - epilogue") {
+
+            it("should have state TearDownCompleted for ServerPark") {
+                env.serverPark.status shouldEqual KafkaEnvironment.ServerParkStatus.TearDownCompleted
+            }
+
+            it("should have state NotAvailable for brokerStatus") {
+                env.serverPark.brokerStatus shouldEqual KafkaEnvironment.BrokerStatus.NotAvailable
+            }
+
+            it("should return null for adminClient") {
+                env.adminClient shouldEqual null
+            }
+
+            it("should have state NotAvailable for schemaRegStatus") {
+                env.serverPark.schemaRegStatus shouldEqual KafkaEnvironment.SchemaRegistryStatus.NotAvailable
+            }
         }
     }
 
