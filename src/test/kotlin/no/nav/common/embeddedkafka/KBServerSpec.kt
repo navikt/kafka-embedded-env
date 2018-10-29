@@ -1,179 +1,72 @@
 package no.nav.common.embeddedkafka
 
-import kafka.utils.ZkUtils
 import no.nav.common.KafkaEnvironment
+import no.nav.common.test.common.TxtCmdRes
+import no.nav.common.test.common.noOfBrokers
+import no.nav.common.test.common.noOfTopics
 import org.amshove.kluent.shouldEqualTo
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.context
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
+import org.apache.kafka.clients.admin.AdminClient
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 object KBServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(2)
+    // too much housekeeping involved starting brokers without KafkaEnvironment
 
-    val sessTimeout = 1500
-    val connTimeout = 500
+    val tests2B = listOf(
+            TxtCmdRes("should report 2 brokers", noOfBrokers, 2),
+            TxtCmdRes("should report 0 topics", noOfTopics, 0)
+    )
+    val tests1B = listOf(
+            TxtCmdRes("should report 1 broker", noOfBrokers, 1),
+            TxtCmdRes("should report 0 topics", noOfTopics, 0)
+    )
 
-    describe("kafka broker tests") {
+    describe("kafka broker tests without withSecurity") {
 
-        context("active embeddedkafka cluster of two broker") {
+        val env = KafkaEnvironment(noOfBrokers = 2)
+        var ac: AdminClient? = null
 
-            val b = 2
-
-            beforeGroup {
-                kEnv.start()
-            }
-
-            it("should have $b broker(s)") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allBrokersInCluster.size()
-                    close()
-                    n
-                } shouldEqualTo b
-            }
-
-            it("should not be any topics available") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allTopics.size()
-                    close()
-                    n
-                } shouldEqualTo 0
-            }
-
-            afterGroup {
-                // nothing here
-            }
+        before {
+            env.start()
+            ac = env.adminClient
         }
 
-        context("active embeddedkafka cluster of 1 stopped broker") {
-
-            val b = 1
-
-            beforeGroup {
-                kEnv.serverPark.brokers[0].stop()
-            }
-
-            it("should have $b broker(s)") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allBrokersInCluster.size()
-                    close()
-                    n
-                } shouldEqualTo b
-            }
-
-            it("should not be any topics available") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allTopics.size()
-                    close()
-                    n
-                } shouldEqualTo 0
-            }
-
-            afterGroup {
-                // nothing here
-            }
+        context("active embedded kafka cluster of two brokers") {
+            tests2B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        context("active embeddedkafka cluster of 1 restarted broker") {
-
-            val b = 2
-
-            beforeGroup {
-                kEnv.serverPark.brokers[0].start()
-            }
-
-            it("should have $b broker(s)") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allBrokersInCluster.size()
-                    close()
-                    n
-                } shouldEqualTo b
-            }
-
-            it("should not be any topics available") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allTopics.size()
-                    close()
-                    n
-                } shouldEqualTo 0
-            }
-
-            afterGroup {
-                // nothing here
-            }
+        context("active embedded kafka cluster with 1 stopped broker") {
+            before { env.brokers.last().stop() }
+            tests1B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        context("active embeddedkafka cluster of 2 stopped brokers") {
-
-            val b = 0
-
-            beforeGroup {
-                kEnv.serverPark.brokers.forEach { it.stop() }
-            }
-
-            it("should have $b broker(s)") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allBrokersInCluster.size()
-                    close()
-                    n
-                } shouldEqualTo b
-            }
-
-            it("should not be any topics available") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allTopics.size()
-                    close()
-                    n
-                } shouldEqualTo 0
-            }
-
-            afterGroup {
-                // nothing here
-            }
+        context("active embedded kafka cluster of 1 restarted broker") {
+            before { env.brokers.last().start() }
+            tests2B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        context("active embeddedkafka cluster of 2 restarted brokers") {
+        after {
+            ac?.close()
+            env.tearDown()
+        }
+    }
 
-            val b = 2
+    describe("kafka broker tests with withSecurity") {
 
-            beforeGroup {
-                kEnv.serverPark.brokers.forEach { it.start() }
-            }
+        val env = KafkaEnvironment(noOfBrokers = 1, withSecurity = true)
+        var ac: AdminClient? = null
 
-            it("should have $b broker(s)") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allBrokersInCluster.size()
-                    close()
-                    n
-                } shouldEqualTo b
-            }
-
-            it("should not be any topics available") {
-
-                ZkUtils.apply(kEnv.serverPark.zookeeper.url, sessTimeout, connTimeout, false).run {
-                    val n = allTopics.size()
-                    close()
-                    n
-                } shouldEqualTo 0
-            }
-
-            afterGroup {
-                // nothing here
-            }
+        before {
+            env.start()
+            ac = env.adminClient
         }
 
-        afterGroup {
-            kEnv.tearDown()
+        tests1B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+
+        after {
+            ac?.close()
+            env.tearDown()
         }
     }
 })

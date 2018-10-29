@@ -1,83 +1,56 @@
 package no.nav.common.embeddedschemaregistry
 
-import com.github.kittinunf.fuel.httpGet
-import com.github.kittinunf.result.Result
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.apache.Apache
 import no.nav.common.KafkaEnvironment
-import org.amshove.kluent.shouldEqual
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.context
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
+import no.nav.common.embeddedutils.ServerBase
+import no.nav.common.test.common.httpReqResp
+import no.nav.common.test.common.scRegTests
+import org.amshove.kluent.shouldBeEqualTo
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 object SRServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(1, withSchemaRegistry = true)
+    // too much housekeeping involved starting schema registry without KafkaEnvironment
 
     describe("schema registry tests") {
 
+        val client = HttpClient(Apache)
+
+        val kEnvSRSS = KafkaEnvironment(withSchemaRegistry = true)
+        var schemaReg: ServerBase? = null
+
         beforeGroup {
-            kEnv.start()
+            kEnvSRSS.start()
+            schemaReg = kEnvSRSS.schemaRegistry
         }
 
-        context("active embeddedkafka cluster with schema reg") {
+        context("active embedded kafka cluster with schema reg") {
 
-            it("should report config compatibility level") {
-
-                (kEnv.serverPark.schemaregistry.url + "/config")
-                        .httpGet()
-                        .responseString().third.component1() shouldEqual """{"compatibilityLevel":"BACKWARD"}"""
-            }
-
-            it("should report zero subjects") {
-
-                (kEnv.serverPark.schemaregistry.url + "/subjects")
-                        .httpGet()
-                        .responseString().third.component1() shouldEqual """[]"""
+            scRegTests.forEach { txt, cmdRes ->
+                it(txt) { httpReqResp(client, schemaReg!!, cmdRes.first) shouldBeEqualTo cmdRes.second }
             }
         }
 
-        context("active embeddedkafka cluster with stopped schema reg") {
+        context("active embedded kafka cluster with stopped schema reg") {
 
-            beforeGroup {
-                kEnv.serverPark.schemaregistry.stop()
-            }
+            beforeGroup { schemaReg!!.stop() }
 
             it("should not report config - connection refused") {
-
-                val (_, _, result) = (kEnv.serverPark.schemaregistry.url + "/config").httpGet()
-                        .timeout(500)
-                        .responseString()
-
-                when (result) {
-                    is Result.Failure -> true // result.error.message
-                    is Result.Success -> false // result.value
-                } shouldEqual true // "java.net.ConnectException: Connection refused (Connection refused)"
+                httpReqResp(client, schemaReg!!, "/config") shouldBeEqualTo "java.net.ConnectException"
             }
         }
 
-        context("active embeddedkafka cluster with restarted schema reg") {
+        context("active embedded kafka cluster with restarted schema reg") {
 
-            beforeGroup {
-                kEnv.serverPark.schemaregistry.start()
-            }
+            beforeGroup { schemaReg!!.start() }
 
-            it("should report config compatibility level") {
-
-                (kEnv.serverPark.schemaregistry.url + "/config")
-                        .httpGet()
-                        .responseString().third.component1() shouldEqual """{"compatibilityLevel":"BACKWARD"}"""
-            }
-
-            it("should report zero subjects") {
-
-                (kEnv.serverPark.schemaregistry.url + "/subjects")
-                        .httpGet()
-                        .responseString().third.component1() shouldEqual """[]"""
+            scRegTests.forEach { txt, cmdRes ->
+                it(txt) { httpReqResp(client, schemaReg!!, cmdRes.first) shouldBeEqualTo cmdRes.second }
             }
         }
 
-        afterGroup {
-            kEnv.tearDown()
-        }
+        afterGroup { kEnvSRSS.tearDown() }
     }
 })

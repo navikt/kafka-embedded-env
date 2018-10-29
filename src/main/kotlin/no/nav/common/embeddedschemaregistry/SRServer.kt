@@ -3,50 +3,53 @@ package no.nav.common.embeddedschemaregistry
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryRestApplication
 import no.nav.common.embeddedutils.ServerBase
-import no.nav.common.embeddedutils.NotRunning
-import no.nav.common.embeddedutils.Running
+import no.nav.common.embeddedutils.ServerStatus
 import java.util.Properties
 
-class SRServer(override val port: Int, private val zkURL: String) : ServerBase() {
+class SRServer(override val port: Int, private val kbURL: String) : ServerBase() {
 
     // see link below for starting up embeddedschemaregistry
-    // https://github.com/confluentinc/schema-registry/blob/4.0.x/core/src/main/java/io/confluent/kafka/schemaregistry/rest/SchemaRegistryMain.java
+    // https://github.com/confluentinc/schema-registry/blob/5.0.x/core/src/main/java/io/confluent/kafka/schemaregistry/rest/SchemaRegistryMain.java
 
     override val url = "http://$host:$port"
 
     // not possible to stop and restart schema registry at this level, use inner core class
-    private class SRS(url: String, zkURL: String) {
+    private class SRS(url: String, kbURL: String) {
 
         val scServer = SchemaRegistryRestApplication(
-                Properties().apply {
-                    set(SchemaRegistryConfig.LISTENERS_CONFIG, url)
-                    set(SchemaRegistryConfig.KAFKASTORE_CONNECTION_URL_CONFIG, zkURL)
-                    set(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG, "_schemas")
-                }
+                SchemaRegistryConfig(
+                        Properties().apply {
+                            set(SchemaRegistryConfig.LISTENERS_CONFIG, url)
+                            set(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, kbURL)
+                            set(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG, "_schemas")
+                        }
+                )
         )
     }
 
     private val sr = mutableListOf<SRS>()
 
     override fun start() = when (status) {
-        NotRunning -> {
-            SRS(url, zkURL).apply {
+        ServerStatus.NotRunning -> {
+            SRS(url, kbURL).apply {
                 sr.add(this)
                 scServer.start()
             }
-            status = Running
+
+            status = ServerStatus.Running
         }
         else -> {}
     }
 
     override fun stop() = when (status) {
-        Running -> {
+        ServerStatus.Running -> {
             sr.first().apply {
                 scServer.stop()
                 scServer.join()
             }
             sr.removeAll { true }
-            status = NotRunning
+
+            status = ServerStatus.NotRunning
         }
         else -> {}
     }

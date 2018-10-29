@@ -5,8 +5,9 @@ import kafka.server.KafkaConfig
 import kafka.server.KafkaServer
 import kafka.utils.VerifiableProperties
 import no.nav.common.embeddedutils.ServerBase
-import no.nav.common.embeddedutils.NotRunning
-import no.nav.common.embeddedutils.Running
+import no.nav.common.embeddedutils.ServerStatus
+import no.nav.common.kafkaAdmin
+import no.nav.common.kafkaClient
 import org.apache.kafka.common.utils.Time
 import scala.Option
 import java.io.File
@@ -17,38 +18,39 @@ class KBServer(
     id: Int,
     noPartitions: Int,
     logDir: File,
-    zkURL: String
+    zkURL: String,
+    withSecurity: Boolean
 ) : ServerBase() {
 
-    // see link below for starting up a embeddedkafka broker
-    // https://insight.io/github.com/apache/kafka/blob/1.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
+    // see link for KafkaServerStartable below for starting up an embedded kafka broker
+    // https://github.com/apache/kafka/blob/2.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
 
-    override val url = "PLAINTEXT://$host:$port"
+    override val url = if (withSecurity) "SASL_PLAINTEXT://$host:$port" else "PLAINTEXT://$host:$port"
 
     private val broker = KafkaServer(
-            KafkaConfig(getDefaultProps(id, zkURL, noPartitions, logDir)),
+            KafkaConfig(getDefaultProps(id, zkURL, noPartitions, logDir, withSecurity)),
             Time.SYSTEM,
             Option.apply(""),
             KafkaMetricsReporter.startReporters(
                     VerifiableProperties(
-                            getDefaultProps(id, zkURL, noPartitions, logDir)
+                            getDefaultProps(id, zkURL, noPartitions, logDir, withSecurity)
                     )
             )
     )
 
     override fun start() = when (status) {
-        NotRunning -> {
+        ServerStatus.NotRunning -> {
             broker.startup()
-            status = Running
+            status = ServerStatus.Running
         }
         else -> {}
     }
 
     override fun stop() = when (status) {
-        Running -> {
+        ServerStatus.Running -> {
             broker.shutdown()
             broker.awaitShutdown()
-            status = NotRunning
+            status = ServerStatus.NotRunning
         }
         else -> {}
     }
@@ -57,11 +59,24 @@ class KBServer(
         id: Int,
         zkURL: String,
         noPartitions: Int,
-        logDir: File
+        logDir: File,
+        withSecurity: Boolean
     ) = Properties().apply {
 
         // see link below for details - trying to make lean embedded embeddedkafka broker
         // https://kafka.apache.org/documentation/#brokerconfigs
+
+        if (withSecurity) {
+            set("security.inter.broker.protocol", "SASL_PLAINTEXT")
+            set("sasl.mechanism.inter.broker.protocol", "PLAIN")
+            set("sasl.enabled.mechanisms", "PLAIN")
+            set("authorizer.class.name", "kafka.security.auth.SimpleAclAuthorizer")
+            set("super.users", "User:${kafkaAdmin.username};User:${kafkaClient.username}")
+            // allow.everyone.if.no.acl.found=true
+            // auto.create.topics.enable=false
+            set("zookeeper.set.acl", "true")
+        }
+        set(KafkaConfig.AutoCreateTopicsEnableProp(), (!withSecurity).toString())
 
         set(KafkaConfig.ZkConnectProp(), zkURL)
         set(KafkaConfig.ZkConnectionTimeoutMsProp(), 500)
@@ -86,15 +101,8 @@ class KBServer(
         set(KafkaConfig.TransactionsTopicReplicationFactorProp(), noPartitions.toShort()) // 3
         set(KafkaConfig.TransactionsTopicMinISRProp(), noPartitions)
 
-        // set(KafkaConfig.RequestTimeoutMsProp(), 2_000)
-        // set(KafkaConfig.ReplicaSocketTimeoutMsProp(), 2_000)
-
         set(KafkaConfig.LeaderImbalanceCheckIntervalSecondsProp(), 10)
-
-        set("log.dir", logDir.absolutePath)
         set(KafkaConfig.LogDirsProp(), logDir.absolutePath)
-
-        set(KafkaConfig.AutoCreateTopicsEnableProp(), true.toString())
 
         set(KafkaConfig.NumRecoveryThreadsPerDataDirProp(), 1)
 

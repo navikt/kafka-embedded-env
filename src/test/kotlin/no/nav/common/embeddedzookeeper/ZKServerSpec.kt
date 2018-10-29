@@ -1,79 +1,53 @@
 package no.nav.common.embeddedzookeeper
 
-import no.nav.common.KafkaEnvironment
+import no.nav.common.embeddedutils.getAvailablePort
+import no.nav.common.setUpJAASContext
 import org.amshove.kluent.shouldBeEqualTo
-import org.apache.zookeeper.client.FourLetterWordMain
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.context
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
+import org.apache.commons.io.FileUtils
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.Suite
+import org.spekframework.spek2.style.specification.describe
+import java.io.File
+import java.io.IOException
 
 object ZKServerSpec : Spek({
 
-    val kEnv = KafkaEnvironment(0) // need only zookeeper
+    val zkDataDir = File(System.getProperty("java.io.tmpdir"), "inmzookeeper").apply {
+        // in case of fatal failure and no deletion in previous run
+        try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
+    }
 
-    describe("zookeeper server tests") {
+    val tests = ZookeeperCMDRSP.values().map { it.cmd to it.rsp }.toMap()
 
-        beforeGroup {
-            // nothing here
+    fun testZKCmds(suite: Suite, zk: ZKServer, i: Int) = suite.apply {
+        context("embedded zookeeper (start/commands/stop) - iteration: $i") {
+            beforeGroup { zk.start() }
+            tests.forEach { cmd, res ->
+                it("should respond '$res' on command '$cmd'") { zk.send4LCommand(cmd) shouldBeEqualTo res }
+            }
+            afterGroup { zk.stop() }
         }
+    }
 
-        context("active embeddedzookeeper (start/stop)") {
+    describe("zookeeper server tests without withSecurity") {
 
-            beforeGroup {
-                kEnv.start()
-            }
+        val minSecurity = false
+        val zk = ZKServer(getAvailablePort(), zkDataDir, minSecurity)
 
-            it("should be ok - command ruok with response imok") {
+        (1..2).forEach { testZKCmds(this, zk, it) }
+    }
 
-                FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
-                        "ruok") shouldBeEqualTo "imok\n"
-            }
+    describe("zookeeper server tests with withSecurity") {
 
-            it("should have no outstanding requests - command reqs with response empty string") {
+        val minSecurity = true
+        setUpJAASContext()
 
-                FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
-                        "reqs") shouldBeEqualTo ""
-            }
+        val zk = ZKServer(getAvailablePort(), zkDataDir, minSecurity)
 
-            afterGroup {
-                kEnv.stop()
-            }
-        }
-
-        context("active embeddedzookeeper (start/stop for 2nd time) ") {
-
-            beforeGroup {
-                kEnv.start()
-            }
-
-            it("should be ok - command ruok with response imok") {
-
-                FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
-                        "ruok") shouldBeEqualTo "imok\n"
-            }
-
-            it("should have no outstanding requests - command reqs with response empty string") {
-
-                FourLetterWordMain.send4LetterWord(
-                        kEnv.serverPark.zookeeper.host,
-                        kEnv.serverPark.zookeeper.port,
-                        "reqs") shouldBeEqualTo ""
-            }
-
-            afterGroup {
-                kEnv.stop()
-            }
-        }
+        (1..2).forEach { testZKCmds(this, zk, it) }
 
         afterGroup {
-            kEnv.tearDown()
+            try { FileUtils.deleteDirectory(zkDataDir) } catch (e: IOException) { /* tried at least */ }
         }
     }
 })
