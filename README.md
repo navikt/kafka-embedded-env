@@ -47,7 +47,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:2.0_0.50"
+    testImplementation "no.nav:kafka-embedded-env:2.0.0"
 }
 ```
 
@@ -56,7 +56,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>2.0_0.50</version>
+    <version>2.0.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -164,7 +164,7 @@ The 'adminClient' property creates an instance of AdminClient with super user au
 with it. See [Kafka AdminClient API](https://kafka.apache.org/20/javadoc/org/apache/kafka/clients/admin/AdminClient.html)
 for the set of available operations. 
 
-Please close adminClient after use. 
+**Please close adminClient after use.**
 
 
 ## Contact

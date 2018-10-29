@@ -101,12 +101,7 @@ class KBServer(
         set(KafkaConfig.TransactionsTopicReplicationFactorProp(), noPartitions.toShort()) // 3
         set(KafkaConfig.TransactionsTopicMinISRProp(), noPartitions)
 
-        // set(KafkaConfig.RequestTimeoutMsProp(), 2_000)
-        // set(KafkaConfig.ReplicaSocketTimeoutMsProp(), 2_000)
-
         set(KafkaConfig.LeaderImbalanceCheckIntervalSecondsProp(), 10)
-
-        // set("log.dir", "/tmp/kafka-logs")
         set(KafkaConfig.LogDirsProp(), logDir.absolutePath)
 
         set(KafkaConfig.NumRecoveryThreadsPerDataDirProp(), 1)

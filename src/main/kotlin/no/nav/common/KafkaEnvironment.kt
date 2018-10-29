@@ -6,9 +6,11 @@ import no.nav.common.embeddedutils.ServerBase
 import no.nav.common.embeddedutils.getAvailablePort
 import no.nav.common.embeddedzookeeper.ZKServer
 import org.apache.commons.io.FileUtils
+import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.common.config.SaslConfigs
 import java.io.File
 import java.io.IOException
 import java.util.Properties
@@ -39,8 +41,6 @@ import java.util.UUID
  * [schemaRegistry] property - relevant iff schema reg included in config and serverPark started
  *
  */
-
-// private val logger = KotlinLogging.logger {}
 
 class KafkaEnvironment(
     noOfBrokers: Int = 1,
@@ -87,9 +87,9 @@ class KafkaEnvironment(
                             set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
                             set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
                             if (withSecurity) {
-                                set("security.protocol", "SASL_PLAINTEXT")
-                                set("sasl.mechanism", "PLAIN")
-                                set("sasl.jaas.config", "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED " +
+                                set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                                set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                                set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED " +
                                         "username=\"${kafkaClient.username}\" password=\"${kafkaClient.password}\";")
                             }
                         }

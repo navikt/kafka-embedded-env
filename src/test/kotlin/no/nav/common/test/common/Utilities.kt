@@ -2,16 +2,17 @@ package no.nav.common.test.common
 
 import com.nhaarman.mockito_kotlin.timeout
 import io.ktor.client.HttpClient
+import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.withTimeoutOrNull
 import no.nav.common.JAAS_REQUIRED
 import no.nav.common.JAAS_PLAIN_LOGIN
 import no.nav.common.embeddedutils.ServerBase
+import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -22,6 +23,7 @@ import org.apache.kafka.common.acl.AccessControlEntry
 import org.apache.kafka.common.acl.AclBinding
 import org.apache.kafka.common.acl.AclOperation
 import org.apache.kafka.common.acl.AclPermissionType
+import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.resource.PatternType
 import org.apache.kafka.common.resource.ResourcePattern
 import org.apache.kafka.common.resource.ResourceType
@@ -62,7 +64,7 @@ val scRegTests = mapOf(
 suspend fun HttpClient.getSomething(endpoint: URL): String =
         this.get {
             url(endpoint)
-            contentType(ContentType.Application.Json)
+            accept(ContentType.Application.Json)
             timeout(500)
         }
 
@@ -117,9 +119,9 @@ suspend fun kafkaProduce(brokersURL: String, topic: String, user: String, pwd: S
                     set(ProducerConfig.ACKS_CONFIG, "all")
                     set(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
                     set(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500)
-                    set("security.protocol", "SASL_PLAINTEXT")
-                    set("sasl.mechanism", "PLAIN")
-                    set("sasl.jaas.config", "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
+                    set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                    set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                    set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
                 }
         )
                 .use { p ->
@@ -150,9 +152,9 @@ suspend fun kafkaConsume(
                         set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
                         set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
                         set(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 4)
-                        set("security.protocol", "SASL_PLAINTEXT")
-                        set("sasl.mechanism", "PLAIN")
-                        set("sasl.jaas.config", "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
+                        set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                        set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                        set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
                     }
             )
                     .use { c ->
