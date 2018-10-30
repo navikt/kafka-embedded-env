@@ -184,7 +184,7 @@ class KafkaEnvironment(
                 },
                 when (withSchemaRegistry) {
                     false -> SchemaRegistryStatus.NotAvailable
-                    else -> SchemaRegistryStatus.Available(SRServer(getAvailablePort(), brokersURL))
+                    else -> SchemaRegistryStatus.Available(SRServer(getAvailablePort(), brokersURL, withSecurity))
                 },
                 ServerParkStatus.Initialized
         )

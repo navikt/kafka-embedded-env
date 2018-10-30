@@ -1,6 +1,7 @@
 package no.nav.common.test.common
 
 import com.nhaarman.mockito_kotlin.timeout
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
@@ -9,9 +10,10 @@ import io.ktor.http.ContentType
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.withTimeoutOrNull
-import no.nav.common.JAAS_REQUIRED
 import no.nav.common.JAAS_PLAIN_LOGIN
+import no.nav.common.JAAS_REQUIRED
 import no.nav.common.embeddedutils.ServerBase
+import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -172,3 +174,78 @@ suspend fun kafkaConsume(
                         } ?: emptyMap()
                     }
         } catch (e: Exception) { emptyMap() }
+
+suspend fun kafkaAvroProduce(
+    brokersURL: String,
+    schemaRegistryUrl: String,
+    topic: String,
+    user: String,
+    pwd: String,
+    data: Map<String, GenericRecord>
+): Boolean =
+        try {
+            KafkaProducer<String, GenericRecord>(
+                    Properties().apply {
+                        set(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                        set(ProducerConfig.CLIENT_ID_CONFIG, "funKafkaAvroProduce")
+                        set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+                        set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "io.confluent.kafka.serializers.KafkaAvroSerializer")
+                        set(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
+                        set(ProducerConfig.ACKS_CONFIG, "all")
+                        set(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
+                        set(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500)
+                        set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                        set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                        set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
+                    })
+                    .use { p ->
+
+                        withTimeoutOrNull(10_000) {
+                            data.forEach { k, v -> p.send(ProducerRecord(topic, k, v)).get() }
+                            true
+                        } ?: false
+                    }
+        } catch (e: Exception) { false }
+
+suspend fun kafkaAvroConsume(
+    brokersURL: String,
+    schemaRegistryUrl: String,
+    topic: String,
+    user: String,
+    pwd: String,
+    noOfEvents: Int
+): Map<String, String> =
+        try {
+
+            KafkaConsumer<String, String>(
+                    Properties().apply {
+                        set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                        set(ConsumerConfig.CLIENT_ID_CONFIG, "funKafkaAvroConsume")
+                        set(ConsumerConfig.GROUP_ID_CONFIG, "funKafkaAvroConsumeGrpID")
+                        set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
+                        set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "io.confluent.kafka.serializers.KafkaAvroDeserializer")
+                        set(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
+                        set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
+                        set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+                        set(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 4)
+                        set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                        set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                        set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
+                    }
+            )
+                    .use { c ->
+                        c.subscribe(listOf(topic))
+
+                        val fE = mutableMapOf<String, String>()
+
+                        withTimeoutOrNull(10_000) {
+
+                            while (fE.size < noOfEvents) {
+                                delay(100)
+                                c.poll(Duration.ofSeconds(50)).forEach { e -> fE[e.key()] = e.value() }
+                            }
+                            fE
+                        } ?: emptyMap()
+                    }
+        } catch (e: Exception) {
+            throw RuntimeException(e) }

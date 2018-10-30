@@ -18,7 +18,7 @@ object SRServerSpec : Spek({
 
         val client = HttpClient(Apache)
 
-        val kEnvSRSS = KafkaEnvironment(withSchemaRegistry = true)
+        val kEnvSRSS = KafkaEnvironment(withSchemaRegistry = true, withSecurity = true)
         var schemaReg: ServerBase? = null
 
         beforeGroup {
