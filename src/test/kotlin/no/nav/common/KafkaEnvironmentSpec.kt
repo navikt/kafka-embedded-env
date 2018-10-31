@@ -8,18 +8,24 @@ import no.nav.common.test.common.TxtCmdRes
 import no.nav.common.test.common.createConsumerACL
 import no.nav.common.test.common.createProducerACL
 import no.nav.common.test.common.httpReqResp
+import no.nav.common.test.common.kafkaAvroConsume
+import no.nav.common.test.common.kafkaAvroProduce
 import no.nav.common.test.common.kafkaConsume
 import no.nav.common.test.common.kafkaProduce
 import no.nav.common.test.common.noOfBrokers
 import no.nav.common.test.common.noOfTopics
 import no.nav.common.test.common.scRegTests
 import no.nav.common.test.common.topics
+import org.amshove.kluent.`should not be`
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeGreaterOrEqualTo
 import org.amshove.kluent.shouldContainAll
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldEqualTo
 import org.amshove.kluent.shouldNotBe
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericData
+import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.admin.AdminClient
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -441,6 +447,75 @@ object KafkaEnvironmentSpec : Spek({
                         topics.first(),
                         kafkaC1.username,
                         kafkaC1.password,
+                        events.size)
+            } shouldContainAll events
+        }
+
+        after {
+            ac?.close()
+            env.tearDown()
+        }
+    }
+
+    describe("kafka environment with security and schema registry") {
+        val topics = listOf("basicAvroRecord01")
+        val env = KafkaEnvironment(topics = topics, withSecurity = true, withSchemaRegistry = true)
+        var ac: AdminClient? = null
+
+        val schemaSource = """
+                  {
+                      "namespace" : "no.nav.common",
+                      "type" : "record",
+                      "name" : "BasicAvroRecord",
+                      "fields" : [
+                        {"name": "number", "type": "int"}
+                      ]
+                    }
+
+                """.trimIndent()
+
+        val avroSchema = Schema.Parser().parse(schemaSource)
+
+        val events: Map<String, GenericRecord> = (1..9).map {
+            "$it" to
+                    GenericData.Record(avroSchema).apply {
+                        put("number", it)
+                    }
+        }.toMap()
+
+        before {
+            env.start()
+            ac = env.adminClient
+        }
+
+        it("should have topic(s) '$topics' available") {
+            ac.topics() shouldContainAll topics
+        }
+
+        it("should have a  schema registry running ") {
+            env.schemaRegistry `should not be` null
+        }
+
+        it("should send all avro events $events to topic '$topics'") {
+            runBlocking {
+                kafkaAvroProduce(
+                        env.brokersURL,
+                        env.schemaRegistry!!.url,
+                        topics.first(),
+                        kafkaClient.username,
+                        kafkaClient.password,
+                        events)
+            } shouldEqualTo true
+        }
+
+        it("should consume all avro events $events from topic '$topics'") {
+            runBlocking {
+                kafkaAvroConsume(
+                        env.brokersURL,
+                        env.schemaRegistry!!.url,
+                        topics.first(),
+                        kafkaClient.username,
+                        kafkaClient.password,
                         events.size)
             } shouldContainAll events
         }

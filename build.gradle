@@ -46,7 +46,7 @@ test {
 }
 
 group 'no.nav'
-version '2.0.0'
+version '2.0.1'
 
 sourceCompatibility = 1.8
 
@@ -76,6 +76,8 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
         exclude group: 'log4j', module: 'log4j'
     }
+
+    testImplementation "io.confluent:kafka-streams-avro-serde:$confluent_version" 
     //cannot include next due to org.apache.log4j.jmx.HierarchyDynamicMBean problem
     //implementation "org.slf4j:log4j-over-slf4j:$slf4j_version"
     testImplementation "ch.qos.logback:logback-classic:$logback_version"
