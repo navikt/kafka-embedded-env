@@ -113,26 +113,24 @@ fun createConsumerACL(topicUser: Map<String, String>): List<AclBinding> =
 suspend fun kafkaProduce(brokersURL: String, topic: String, user: String, pwd: String, data: Map<String, String>): Boolean =
     try {
         KafkaProducer<String, String>(
-                Properties().apply {
-                    set(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
-                    set(ProducerConfig.CLIENT_ID_CONFIG, "funKafkaProduce")
-                    set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
-                    set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
-                    set(ProducerConfig.ACKS_CONFIG, "all")
-                    set(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
-                    set(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500)
-                    set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
-                    set(SaslConfigs.SASL_MECHANISM, "PLAIN")
-                    set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
-                }
-        )
-                .use { p ->
-
-                    withTimeoutOrNull(10_000) {
-                        data.forEach { k, v -> p.send(ProducerRecord(topic, k, v)).get() }
-                        true
-                    } ?: false
-                }
+            Properties().apply {
+                set(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                set(ProducerConfig.CLIENT_ID_CONFIG, "funKafkaProduce")
+                set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+                set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+                set(ProducerConfig.ACKS_CONFIG, "all")
+                set(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
+                set(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500)
+                set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
+            }
+        ).use { p ->
+            withTimeoutOrNull(10_000) {
+                data.forEach { k, v -> p.send(ProducerRecord(topic, k, v)).get() }
+                true
+            } ?: false
+        }
     } catch (e: Exception) { false }
 
 suspend fun kafkaConsume(
@@ -143,36 +141,34 @@ suspend fun kafkaConsume(
     noOfEvents: Int
 ): Map<String, String> =
         try {
-
             KafkaConsumer<String, String>(
-                    Properties().apply {
-                        set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
-                        set(ConsumerConfig.CLIENT_ID_CONFIG, "funKafkaConsume")
-                        set(ConsumerConfig.GROUP_ID_CONFIG, "funKafkaConsumeGrpID")
-                        set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
-                        set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
-                        set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
-                        set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-                        set(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 4)
-                        set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
-                        set(SaslConfigs.SASL_MECHANISM, "PLAIN")
-                        set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
+                Properties().apply {
+                    set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                    set(ConsumerConfig.CLIENT_ID_CONFIG, "funKafkaConsume")
+                    set(ConsumerConfig.GROUP_ID_CONFIG, "funKafkaConsumeGrpID")
+                    set(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
+                    set(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
+                    set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
+                    set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+                    set(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 4)
+                    set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                    set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                    set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
+                }
+            ).use { c ->
+                c.subscribe(listOf(topic))
+
+                val fE = mutableMapOf<String, String>()
+
+                withTimeoutOrNull(10_000) {
+
+                    while (fE.size < noOfEvents) {
+                        delay(100)
+                        c.poll(Duration.ofMillis(500)).forEach { e -> fE[e.key()] = e.value() }
                     }
-            )
-                    .use { c ->
-                        c.subscribe(listOf(topic))
-
-                        val fE = mutableMapOf<String, String>()
-
-                        withTimeoutOrNull(10_000) {
-
-                            while (fE.size < noOfEvents) {
-                                delay(100)
-                                c.poll(Duration.ofMillis(500)).forEach { e -> fE[e.key()] = e.value() }
-                            }
-                            fE
-                        } ?: emptyMap()
-                    }
+                    fE
+                } ?: emptyMap()
+            }
         } catch (e: Exception) { emptyMap() }
 
 suspend fun kafkaAvroProduce(
@@ -185,26 +181,25 @@ suspend fun kafkaAvroProduce(
 ): Boolean =
         try {
             KafkaProducer<String, GenericRecord>(
-                    Properties().apply {
-                        set(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
-                        set(ProducerConfig.CLIENT_ID_CONFIG, "funKafkaAvroProduce")
-                        set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
-                        set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "io.confluent.kafka.serializers.KafkaAvroSerializer")
-                        set(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
-                        set(ProducerConfig.ACKS_CONFIG, "all")
-                        set(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
-                        set(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500)
-                        set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
-                        set(SaslConfigs.SASL_MECHANISM, "PLAIN")
-                        set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
-                    })
-                    .use { p ->
-
-                        withTimeoutOrNull(10_000) {
-                            data.forEach { k, v -> p.send(ProducerRecord(topic, k, v)).get() }
-                            true
-                        } ?: false
-                    }
+                Properties().apply {
+                    set(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                    set(ProducerConfig.CLIENT_ID_CONFIG, "funKafkaAvroProduce")
+                    set(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+                    set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "io.confluent.kafka.serializers.KafkaAvroSerializer")
+                    set(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
+                    set(ProducerConfig.ACKS_CONFIG, "all")
+                    set(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
+                    set(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500)
+                    set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                    set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                    set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
+                }
+            ).use { p ->
+                withTimeoutOrNull(10_000) {
+                    data.forEach { k, v -> p.send(ProducerRecord(topic, k, v)).get() }
+                    true
+                } ?: false
+            }
         } catch (e: Exception) { false }
 
 suspend fun kafkaAvroConsume(
@@ -232,20 +227,18 @@ suspend fun kafkaAvroConsume(
                         set(SaslConfigs.SASL_MECHANISM, "PLAIN")
                         set(SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";")
                     }
-            )
-                    .use { c ->
-                        c.subscribe(listOf(topic))
+            ).use { c ->
+                c.subscribe(listOf(topic))
 
-                        val fE = mutableMapOf<String, String>()
+                val fE = mutableMapOf<String, String>()
 
-                        withTimeoutOrNull(10_000) {
+                withTimeoutOrNull(10_000) {
 
-                            while (fE.size < noOfEvents) {
-                                delay(100)
-                                c.poll(Duration.ofSeconds(50)).forEach { e -> fE[e.key()] = e.value() }
-                            }
-                            fE
-                        } ?: emptyMap()
+                    while (fE.size < noOfEvents) {
+                        delay(100)
+                        c.poll(Duration.ofSeconds(50)).forEach { e -> fE[e.key()] = e.value() }
                     }
-        } catch (e: Exception) {
-            throw RuntimeException(e) }
+                    fE
+                } ?: emptyMap()
+            }
+        } catch (e: Exception) { throw RuntimeException(e) }
