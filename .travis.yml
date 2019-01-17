@@ -3,7 +3,7 @@ language: java
 jdk:
 - openjdk8
 before_install:
-- openssl aes-256-cbc -K $encrypted_a4e132a4b597_key -iv $encrypted_a4e132a4b597_iv \
+- openssl aes-256-cbc -K $encrypted_a4e132a4b597_key -iv $encrypted_a4e132a4b597_iv
   -in travis/codesigning.asc.enc -out travis/codesigning.asc -d
 - gpg --fast-import travis/codesigning.asc
 script:
