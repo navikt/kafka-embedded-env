@@ -13,12 +13,12 @@ buildscript {
 
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.3.11"
-    id 'maven-publish'
     id 'org.jmailen.kotlinter' version '1.20.1'
     id 'com.github.ben-manes.versions' version '0.20.0'
     id "org.jetbrains.dokka" version "0.9.17"
     id 'signing'
     id 'io.codearte.nexus-staging' version '0.12.0'
+    id 'de.marcphilipp.nexus-publish' version '0.1.1'
 }
 
 dokka {
@@ -44,7 +44,7 @@ test {
 }
 
 group 'no.nav'
-version '2.0.3'
+version '2.0.2'
 
 sourceCompatibility = 1.8
 
@@ -133,17 +133,6 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            credentials {
-                username findProperty("ossrhUsername")
-                password findProperty("ossrhPassword")
-            }
-            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-            url version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-        }
-    }
 }
 
 signing {
@@ -155,4 +144,5 @@ nexusStaging {
     username = findProperty("ossrhUsername")
     password = findProperty("ossrhPassword")
     packageGroup = 'no.nav'
+    stagingProfileId = "3a10cafa813c47"
 }
