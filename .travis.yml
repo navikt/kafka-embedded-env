@@ -1,20 +1,27 @@
+sudo: required
 language: java
 jdk:
-- openjdk11
+- openjdk8
+before_install:
+- openssl aes-256-cbc -K $encrypted_a4e132a4b597_key -iv $encrypted_a4e132a4b597_iv \
+  -in travis/codesigning.asc.enc -out travis/codesigning.asc -d
+- gpg --fast-import travis/codesigning.asc
 script:
-- "./gradlew test build"
+- "./gradlew check"
+- "./gradlew build"
+- |
+  set -e
+  if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ "${TRAVIS_BRANCH}" = "master" ]; then
+   ./gradlew publish --info
+   ./gradlew getStagingProfile closeAndReleaseRepository --info
+  fi
 before_cache:
-  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-deploy:
-  provider: script
-  script: "./travis/deploy.sh"
-  on:
-    branch: master
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
 notifications:
   slack:
     secure: xarIqgqwazZl5wpwxKtgwcPTGWirNhTDpDiNwmnyxdtMD9tw38XySjifuFSCXJApF57dKlxiVT4K//AY8jBsLsSB/stng4nOg6fuEP/ZxDY5/C80CFHXltSYjDL1zDBBECw9gugOAvmMePGpRXY9Jm9sZgku7PYv+VA6FCOb2BnqELsxN7Hj/3Z9w67uosh5ytJ8sQ9aN6eAcnl4ST3O7cOH5zfiS4yzufAZ1oZjLkkXwSuPl5YN3rLusQVcjnKXg+fQ5qBfrtxM1+TRe0H8DQUfU+SiKF+QbvNx/XPQFIwlcVZ3o9KJ7AV9ANn5qmypx+u0UMOTPSshq3lE3GkNCWVuDLZ2Fm2XiFH8xxhPQpHLY77z7y+Yy6JSrRBtkBtlMksi3ghgCe7tJ/CXx/af2FPyHTaVSVXLJn7EhHsWxfCyrcMvaV0LqJNkfVeFveoHTSdh2+FSsSH8euI20QwlnVHY3jf+FtafZ5CxLkolFNX+QdHVMJj/h0iJxSiZl7cCu8KLuD/pezEH5a3hPzknkhcEF6EOvj2KvCWdQbcuo7eY0ORcDoaZN9CrFblh75FxQfyCKkRUvz0m+iiy6YNYWN6DpArie1YljX1HkBZypg172l05Ejxg4Dy9RjSJJcIVJb1z15OANIZ2+1/eHKBQWdWJfoAoFHUIfI2KCy5zYg4=
