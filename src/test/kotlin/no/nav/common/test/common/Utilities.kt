@@ -1,15 +1,14 @@
 package no.nav.common.test.common
 
-import com.nhaarman.mockito_kotlin.timeout
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.withTimeoutOrNull
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import no.nav.common.JAAS_PLAIN_LOGIN
 import no.nav.common.JAAS_REQUIRED
 import no.nav.common.embeddedutils.ServerBase
@@ -67,7 +66,6 @@ suspend fun HttpClient.getSomething(endpoint: URL): String =
         this.get {
             url(endpoint)
             accept(ContentType.Application.Json)
-            timeout(500)
         }
 
 val httpReqResp: (HttpClient, ServerBase, String) -> String = { client, sr, path ->

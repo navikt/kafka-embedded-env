@@ -2,7 +2,7 @@ package no.nav.common
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.runBlocking
 import no.nav.common.embeddedzookeeper.ZookeeperCMDRSP
 import no.nav.common.test.common.TxtCmdRes
 import no.nav.common.test.common.createConsumerACL
