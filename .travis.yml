@@ -13,7 +13,7 @@ script:
   set -e
   if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ "${TRAVIS_BRANCH}" = "master" ]; then
    ./gradlew publish --info
-   ./gradlew getStagingProfile closeAndReleaseRepository --info
+   ./gradlew getStagingProfile closeAndReleaseRepository --info --stacktrace
   fi
 before_cache:
 - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
