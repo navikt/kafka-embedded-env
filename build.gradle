@@ -44,7 +44,7 @@ test {
 }
 
 group 'no.nav'
-version '2.0.3-SNAPSHOT'
+version '2.0.3'
 
 sourceCompatibility = 1.8
 
