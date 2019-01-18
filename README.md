@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/navikt/kafka-embedded-env.svg?branch=master)](https://travis-ci.org/navikt/kafka-embedded-env) 
-[![Published on Maven](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/no/nav/kafka-embedded-env/maven-metadata.xml.svg)](http://central.maven.org/maven2/no/nav/kafka-embedded-env/)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/no.nav/kafka-embedded-env/badge.svg)](https://maven-badges.herokuapp.com/maven-central/no.nav/kafka-embedded-env)
 
 # kafka-embedded-env 
 
