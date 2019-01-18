@@ -7,7 +7,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.20.0"
     id("org.jetbrains.dokka") version "0.9.17"
     id("signing")
-    id("io.codearte.nexus-staging") version "0.12.0"
+    id("io.codearte.nexus-staging") version "0.20.0"
     id("de.marcphilipp.nexus-publish") version "0.1.1"
 }
 
@@ -23,6 +23,7 @@ nexusStaging {
     username = System.getenv("OSSRH_JIRA_USERNAME")
     password = System.getenv("OSSRH_JIRA_PASSWORD")
     packageGroup = "no.nav"
+    stagingProfileId = "3a10cafa813c47"
 }
 
 group = "no.nav"
