@@ -27,7 +27,7 @@ nexusStaging {
 }
 
 group = "no.nav"
-version = "2.0.3"
+version = "2.0.2"
 
 val artifactDescription = "Simple API for running a Kafka/Confluent environment locally"
 val repoUrl = "https://github.com/navikt/kafka-embedded-env.git"
