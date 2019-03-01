@@ -13,13 +13,17 @@ and use those in configurations for each server.
 ```kotlin
 class KafkaEnvironment(
     noOfBrokers: Int = 1,
-    val topics: List<String> = emptyList(),
+    topicNames: List<String> = emptyList(),
+    topicInfos: List<TopicInfo> = emptyList(),
     withSchemaRegistry: Boolean = false,
     val withSecurity: Boolean = false,
     users: List<JAASCredential> = emptyList(),
-    autoStart: Boolean = false
-) : AutoCloseable
-  
+    autoStart: Boolean = false,
+    brokerConfigOverrides: Properties = Properties()
+) : AutoCloseable {
+    data class TopicInfo(val name: String, val partitions: Int = 2, val config: Map<String, String>? = null)
+}
+ 
 fun start() // start servers in correct order
  
 fun stop() // stop servers in correct order - session data are available
@@ -47,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:2.0.2"
+    testImplementation "no.nav:kafka-embedded-env:2.1.0"
 }
 ```
 
@@ -56,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>2.0.2</version>
+    <version>2.1.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -82,7 +86,7 @@ The default settings gives
 ```kotlin
 val kafkaEnv = KafkaEnvironment(
     noOfBrokers = 2,
-    topics = listOf("test1", "test2", "test3"),
+    topicNames = listOf("test1", "test2", "test3"),
     withSchemaRegistry = true,
     autoStart = true
 )
@@ -101,7 +105,7 @@ Each topic will have number of partitions equal to number of brokers.
 ```kotlin
 val kafkaEnv = KafkaEnvironment(
     noOfBrokers = 2,
-    topics = listOf("custom1"),
+    topicNames = listOf("custom1"),
     withSecurity = true,
     users = listOf(JAASCredential("myP1", "myP1p"),JAASCredential("myC1", "myC1p")),
     autoStart = true
