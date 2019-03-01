@@ -110,7 +110,7 @@ object KafkaEnvironmentSpec : Spek({
     describe("basic kafka environment") {
 
         val topics = listOf("basic01", "basic02")
-        val env = KafkaEnvironment(topics = topics)
+        val env = KafkaEnvironment(topicNames = topics)
         var ac: AdminClient? = null
 
         before {
@@ -129,6 +129,42 @@ object KafkaEnvironmentSpec : Spek({
 
         it("should have topic(s) $topics available") {
             ac.topics() shouldContainAll topics
+        }
+
+        after {
+            ac?.close()
+            env.tearDown()
+        }
+    }
+
+    describe("basic kafka environment with topicInfos and topicNames") {
+
+        val topicNames = listOf("basic01", "basic02")
+        val topicInfos = listOf(
+                KafkaEnvironment.TopicInfo("advanced01", 4, mapOf("retention.ms" to "5000"))
+        )
+
+        val expectedTopicNames = topicNames + topicInfos.map { it.name }
+
+        val env = KafkaEnvironment(topicNames = topicNames, topicInfos = topicInfos)
+        var ac: AdminClient? = null
+
+        before {
+            env.start()
+            ac = env.adminClient
+        }
+
+        context("basic verification") {
+
+            it("should have 1 zookeeper with status ok") {
+                env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
+            }
+
+            getTests(1, expectedTopicNames).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+        }
+
+        it("should have topic(s) $expectedTopicNames available") {
+            ac.topics() shouldContainAll expectedTopicNames
         }
 
         after {
@@ -221,7 +257,7 @@ object KafkaEnvironmentSpec : Spek({
     describe("kafka environment with 0 brokers and 2 topics") {
 
         val topics = listOf("basic01", "basic02")
-        val env = KafkaEnvironment(noOfBrokers = 0, topics = topics)
+        val env = KafkaEnvironment(noOfBrokers = 0, topicNames = topics)
         var ac: AdminClient? = null
 
         before {
@@ -254,7 +290,7 @@ object KafkaEnvironmentSpec : Spek({
         val cons = JAASCredential("myC1", "myC1p")
         val users = listOf(prod, cons)
         val topics = listOf("custom01")
-        val env = KafkaEnvironment(noOfBrokers = 1, topics = topics, withSecurity = true, users = users)
+        val env = KafkaEnvironment(noOfBrokers = 1, topicNames = topics, withSecurity = true, users = users)
         var ac: AdminClient? = null
 
         val events = (1..9).map { "$it" to "event$it" }.toMap()
@@ -330,7 +366,7 @@ object KafkaEnvironmentSpec : Spek({
         val prod = JAASCredential("invalidP1", "invP1p")
         val cons = JAASCredential("invalidC1", "invC1p")
         val topics = listOf("invalid01")
-        val env = KafkaEnvironment(noOfBrokers = 1, topics = topics, withSecurity = true) // not adding users
+        val env = KafkaEnvironment(noOfBrokers = 1, topicNames = topics, withSecurity = true) // not adding users
         var ac: AdminClient? = null
 
         val events = (1..9).map { "$it" to "event$it" }.toMap()
@@ -395,7 +431,7 @@ object KafkaEnvironmentSpec : Spek({
     describe("kafka environment with security, predefined JAASCredential") {
 
         val topics = listOf("basic01")
-        val env = KafkaEnvironment(noOfBrokers = 1, topics = topics, withSecurity = true)
+        val env = KafkaEnvironment(noOfBrokers = 1, topicNames = topics, withSecurity = true)
         var ac: AdminClient? = null
 
         val events = (1..9).map { "$it" to "event$it" }.toMap()
@@ -459,7 +495,7 @@ object KafkaEnvironmentSpec : Spek({
 
     describe("kafka environment with security and schema registry") {
         val topics = listOf("basicAvroRecord01")
-        val env = KafkaEnvironment(topics = topics, withSecurity = true, withSchemaRegistry = true)
+        val env = KafkaEnvironment(topicNames = topics, withSecurity = true, withSchemaRegistry = true)
         var ac: AdminClient? = null
 
         val schemaSource = """
