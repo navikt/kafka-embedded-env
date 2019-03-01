@@ -20,11 +20,13 @@ import java.util.UUID
  * A in-memory kafka environment consisting of
  * - 1 zookeeper
  * @param noOfBrokers no of brokers to spin up, default one and maximum 2
- * @param topics a list of topics to create at environment startup - default empty
+ * @param topicInfos a list of topics to create at environment startup - default empty
+ * @param topicNames same as topicInfos, but for topics that can use the default values
  * @param withSchemaRegistry optional schema registry - default false
  * @param autoStart start servers immediately - default false
  * @param withSecurity gives SASL plain security (authentication and authorization)
  * @param users add custom users for authentication and authorization. Only relevant when withSecurity enabled
+ * @param brokerConfigOverrides possibility to override broker configuration
  *
  * If noOfBrokers is zero, non-empty topics or withSchemaRegistry as true, will automatically include one broker
  *
@@ -44,12 +46,17 @@ import java.util.UUID
 
 class KafkaEnvironment(
     noOfBrokers: Int = 1,
-    val topics: List<String> = emptyList(),
+    topicNames: List<String> = emptyList(),
+    topicInfos: List<TopicInfo> = emptyList(),
     withSchemaRegistry: Boolean = false,
     val withSecurity: Boolean = false,
     users: List<JAASCredential> = emptyList(),
-    autoStart: Boolean = false
+    autoStart: Boolean = false,
+    brokerConfigOverrides: Properties = Properties()
 ) : AutoCloseable {
+    data class TopicInfo(val name: String, val partitions: Int = 2, val config: Map<String, String>? = null)
+
+    private val topics = topicInfos + topicNames.map { name -> TopicInfo(name) }
 
     sealed class BrokerStatus {
         data class Available(
@@ -170,7 +177,7 @@ class KafkaEnvironment(
         val zk = ZKServer(getAvailablePort(), zkDataDir, withSecurity)
 
         val kBrokers = (0 until reqNoOfBrokers).map {
-            KBServer(getAvailablePort(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url, withSecurity)
+            KBServer(getAvailablePort(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url, withSecurity, brokerConfigOverrides)
         }
         val brokersURL = kBrokers.map { it.url }.foldRight("") { u, acc ->
             if (acc.isEmpty()) u else "$u,$acc"
@@ -269,15 +276,14 @@ class KafkaEnvironment(
     // see the following link for creating topic
     // https://kafka.apache.org/20/javadoc/org/apache/kafka/clients/admin/AdminClient.html#createTopics-java.util.Collection-
 
-    private fun createTopics(topics: List<String>) {
+    private fun createTopics(topics: List<TopicInfo>) {
 
         // this func is only invoked if broker(s) are available and started
 
-        val noPartitions = this.brokers.size
         val replFactor = this.brokers.size
 
         this.adminClient?.use { ac ->
-            ac.createTopics(topics.map { name -> NewTopic(name, noPartitions, replFactor.toShort()) })
+            ac.createTopics(topics.map { topic -> NewTopic(topic.name, topic.partitions, replFactor.toShort()) })
         }
 
         topicsCreated = true

@@ -19,7 +19,8 @@ class KBServer(
     noPartitions: Int,
     logDir: File,
     zkURL: String,
-    withSecurity: Boolean
+    withSecurity: Boolean,
+    private val configOverrides: Properties
 ) : ServerBase() {
 
     // see link for KafkaServerStartable below for starting up an embedded kafka broker
@@ -108,5 +109,7 @@ class KBServer(
 
         set(KafkaConfig.ControlledShutdownMaxRetriesProp(), 1)
         set(KafkaConfig.ControlledShutdownRetryBackoffMsProp(), 500)
+
+        putAll(configOverrides)
     }
 }
