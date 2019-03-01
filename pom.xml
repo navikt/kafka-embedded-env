@@ -211,6 +211,9 @@
                     <includes>
                         <include>**/*Spec.*</include>
                     </includes>
+                    <systemPropertyVariables>
+                        <logback.configurationFile>${basedir}/src/test/resources/logback-silent.xml</logback.configurationFile>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
