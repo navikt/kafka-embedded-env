@@ -172,7 +172,7 @@ for the set of available operations.
 
 ## Changelog
 
-### [2.1.0/3.0.0]
+### [2.1.0]
 
 These two versions are equivalent. 2.1.0 was released with a breaking change in the API, which obviously does not adhere to the semantic versioning. 
 We've re-released this as 3.0.0 to better indicate breaking changes.
