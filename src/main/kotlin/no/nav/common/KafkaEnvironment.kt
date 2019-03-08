@@ -3,18 +3,17 @@ package no.nav.common
 import no.nav.common.embeddedkafka.KBServer
 import no.nav.common.embeddedschemaregistry.SRServer
 import no.nav.common.embeddedutils.ServerBase
+import no.nav.common.embeddedutils.appDirFor
+import no.nav.common.embeddedutils.dataDirFor
+import no.nav.common.embeddedutils.deleteDir
 import no.nav.common.embeddedutils.getAvailablePort
 import no.nav.common.embeddedzookeeper.ZKServer
-import org.apache.commons.io.FileUtils
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.config.SaslConfigs
-import java.io.File
-import java.io.IOException
 import java.util.Properties
-import java.util.UUID
 
 /**
  * A in-memory kafka environment consisting of
@@ -150,19 +149,8 @@ class KafkaEnvironment(
     // in case of start of environment will be manually triggered later on
     private var topicsCreated = false
 
-    private val zkDataDir = File(System.getProperty("java.io.tmpdir"), "inmzookeeper").apply {
-        // in case of fatal failure and no deletion in previous run
-        try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
-    }
-
-    private val kbLDirRoot = File(System.getProperty("java.io.tmpdir"), "inmkafkabroker").apply {
-        // in case of fatal failure and no deletion in previous run
-        try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
-    }
-
-    private val kbLDirIter = (0 until reqNoOfBrokers).map {
-        File(System.getProperty("java.io.tmpdir"), "inmkafkabroker/ID$it${UUID.randomUUID()}")
-    }.iterator()
+    private val zookeeperDataBaseDir = appDirFor("inmemoryzookeeper")
+    private val kafkaBrokerDataBaseDir = appDirFor("inmemorykafkabroker")
 
     var serverPark: ServerPark
         private set
@@ -174,10 +162,10 @@ class KafkaEnvironment(
             setUpJAASContext()
         }
 
-        val zk = ZKServer(getAvailablePort(), zkDataDir, withSecurity)
+        val zk = ZKServer(getAvailablePort(), dataDirFor(zookeeperDataBaseDir), withSecurity)
 
         val kBrokers = (0 until reqNoOfBrokers).map {
-            KBServer(getAvailablePort(), it, reqNoOfBrokers, kbLDirIter.next(), zk.url, withSecurity, brokerConfigOverrides)
+            KBServer(getAvailablePort(), it, reqNoOfBrokers, dataDirFor(kafkaBrokerDataBaseDir), zk.url, withSecurity, brokerConfigOverrides)
         }
         val brokersURL = kBrokers.map { it.url }.foldRight("") { u, acc ->
             if (acc.isEmpty()) u else "$u,$acc"
@@ -260,8 +248,8 @@ class KafkaEnvironment(
             else -> {}
         }
 
-        try { FileUtils.deleteDirectory(zkDataDir) } catch (e: IOException) { /* tried at least */ }
-        try { FileUtils.deleteDirectory(kbLDirRoot) } catch (e: IOException) { /* tried at least */ }
+        deleteDir(zookeeperDataBaseDir)
+        deleteDir(kafkaBrokerDataBaseDir)
 
         serverPark = ServerPark(
                 serverPark.zookeeper,

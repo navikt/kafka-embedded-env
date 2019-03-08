@@ -9,15 +9,16 @@ import no.nav.common.embeddedutils.ServerStatus
 import no.nav.common.kafkaAdmin
 import no.nav.common.kafkaClient
 import org.apache.kafka.common.utils.Time
+import org.apache.kafka.streams.StreamsConfig
 import scala.Option
-import java.io.File
+import java.nio.file.Path
 import java.util.Properties
 
 class KBServer(
     override val port: Int,
     id: Int,
     noPartitions: Int,
-    logDir: File,
+    dataDir: Path,
     zkURL: String,
     withSecurity: Boolean,
     private val configOverrides: Properties
@@ -28,15 +29,13 @@ class KBServer(
 
     override val url = if (withSecurity) "SASL_PLAINTEXT://$host:$port" else "PLAINTEXT://$host:$port"
 
+    private val kafkaProperties = getDefaultProps(id, zkURL, noPartitions, dataDir.resolve("log"),
+            dataDir.resolve("logs"), dataDir.resolve("streams"), withSecurity)
     private val broker = KafkaServer(
-            KafkaConfig(getDefaultProps(id, zkURL, noPartitions, logDir, withSecurity)),
+            KafkaConfig(kafkaProperties),
             Time.SYSTEM,
             Option.apply(""),
-            KafkaMetricsReporter.startReporters(
-                    VerifiableProperties(
-                            getDefaultProps(id, zkURL, noPartitions, logDir, withSecurity)
-                    )
-            )
+            KafkaMetricsReporter.startReporters(VerifiableProperties(kafkaProperties))
     )
 
     override fun start() = when (status) {
@@ -60,7 +59,9 @@ class KBServer(
         id: Int,
         zkURL: String,
         noPartitions: Int,
-        logDir: File,
+        logDir: Path,
+        logDirs: Path,
+        stateDir: Path,
         withSecurity: Boolean
     ) = Properties().apply {
 
@@ -103,7 +104,9 @@ class KBServer(
         set(KafkaConfig.TransactionsTopicMinISRProp(), noPartitions)
 
         set(KafkaConfig.LeaderImbalanceCheckIntervalSecondsProp(), 10)
-        set(KafkaConfig.LogDirsProp(), logDir.absolutePath)
+        set(KafkaConfig.LogDirProp(), logDir.toAbsolutePath().toString())
+        set(KafkaConfig.LogDirsProp(), logDirs.toAbsolutePath().toString())
+        set(StreamsConfig.STATE_DIR_CONFIG, stateDir.toAbsolutePath().toString())
 
         set(KafkaConfig.NumRecoveryThreadsPerDataDirProp(), 1)
 

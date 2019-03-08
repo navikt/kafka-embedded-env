@@ -2,14 +2,13 @@ package no.nav.common.embeddedzookeeper
 
 import no.nav.common.embeddedutils.ServerBase
 import no.nav.common.embeddedutils.ServerStatus
-import org.apache.commons.io.FileUtils
 import org.apache.zookeeper.server.ZooKeeperServerMain
 import java.io.BufferedReader
-import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.Properties
 import kotlin.concurrent.thread
 
@@ -20,7 +19,7 @@ enum class ZookeeperCMDRSP(val cmd: String, val rsp: String) {
     REQS("reqs", "") // prerequisite is idle zookeeper
 }
 
-class ZKServer(override val port: Int, private val dataDir: File, private val withSecurity: Boolean) : ServerBase() {
+class ZKServer(override val port: Int, private val dataDir: Path, private val withSecurity: Boolean) : ServerBase() {
 
     // see link for ZooKeeperServerMain below for starting up embeddedzookeeper
     // https://github.com/apache/zookeeper/blob/branch-3.4.13/src/java/main/org/apache/zookeeper/server/ZooKeeperServerMain.java
@@ -28,10 +27,10 @@ class ZKServer(override val port: Int, private val dataDir: File, private val wi
     override val url = "$host:$port"
 
     // not possible to stop and restart zookeeper, use core inner class
-    private class ZKS(port: Int, dataDir: File, withSecurity: Boolean) : ZooKeeperServerMain() {
+    private class ZKS(port: Int, dataDir: Path, withSecurity: Boolean) : ZooKeeperServerMain() {
 
         private val propsBasic = Properties().apply {
-            set("dataDir", dataDir.toString())
+            set("dataDir", dataDir.toAbsolutePath().toString())
             set("clientPort", "$port")
             set("maxClientCnxns", "0")
             if (withSecurity) {
@@ -43,9 +42,9 @@ class ZKServer(override val port: Int, private val dataDir: File, private val wi
 
         private val propFile = "$dataDir/embeddedzk.properties".also { fName ->
             try {
-                File(fName).let { f ->
-                    FileUtils.forceMkdir(dataDir)
-                    FileOutputStream(f).use { out -> propsBasic.store(out, "") }
+                Files.createDirectories(dataDir)
+                Files.newOutputStream(dataDir.resolve(fName)).use { out ->
+                    propsBasic.store(out, "")
                 }
             } catch (e: Exception) { /*  will get error when starting zookeeper */ }
         }
