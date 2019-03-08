@@ -170,6 +170,42 @@ for the set of available operations.
 
 **Please close adminClient after use.**
 
+## Changelog
+
+### [2.1.0/3.0.0]
+
+These two versions are equivalent. 2.1.0 was released with a breaking change in the API, which obviously does not adhere to the semantic versioning. 
+We've re-released this as 3.0.0 to better indicate breaking changes.
+
+#### What's new?
+
+The possibility to override topic as well as broker configurations:
+
+```
+@param topicInfos a list of topics to create at environment startup - default empty
+@param topicNames same as topicInfos, but for topics that can use the default values
+@param brokerConfigOverrides possibility to override broker configuration
+```
+
+```kotlin
+class KafkaEnvironment(
+    noOfBrokers: Int = 1,
+    topicNames: List<String> = emptyList(),
+    topicInfos: List<TopicInfo> = emptyList(),
+    withSchemaRegistry: Boolean = false,
+    val withSecurity: Boolean = false,
+    users: List<JAASCredential> = emptyList(),
+    autoStart: Boolean = false,
+    brokerConfigOverrides: Properties = Properties()
+) : AutoCloseable {
+    data class TopicInfo(val name: String, val partitions: Int = 2, val config: Map<String, String>? = null)
+}
+```
+
+#### Breaking changes from 2.0.x
+
+`class KafkaEnvironment`:
+ - The parameter `topics` should be renamed to `topicNames` if you wish to keep the behaviour from previous versions.
 
 ## Contact
 
