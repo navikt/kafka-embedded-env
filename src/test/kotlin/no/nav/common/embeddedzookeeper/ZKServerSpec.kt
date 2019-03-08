@@ -1,23 +1,21 @@
 package no.nav.common.embeddedzookeeper
 
+import no.nav.common.embeddedutils.appDirFor
+import no.nav.common.embeddedutils.dataDirFor
+import no.nav.common.embeddedutils.deleteDir
 import no.nav.common.embeddedutils.getAvailablePort
 import no.nav.common.setUpJAASContext
 import org.amshove.kluent.shouldBeEqualTo
-import org.apache.commons.io.FileUtils
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.Suite
 import org.spekframework.spek2.style.specification.describe
-import java.io.File
-import java.io.IOException
 
 object ZKServerSpec : Spek({
-
-    val zkDataDir = File(System.getProperty("java.io.tmpdir"), "inmzookeeper").apply {
-        // in case of fatal failure and no deletion in previous run
-        try { FileUtils.deleteDirectory(this) } catch (e: IOException) { /* tried at least */ }
-    }
-
     val tests = ZookeeperCMDRSP.values().map { it.cmd to it.rsp }.toMap()
+
+    val zookeeperBasePath = appDirFor("zookeeper")
+
+    afterGroup { deleteDir(zookeeperBasePath) }
 
     fun testZKCmds(suite: Suite, zk: ZKServer, i: Int) = suite.apply {
         context("embedded zookeeper (start/commands/stop) - iteration: $i") {
@@ -32,7 +30,7 @@ object ZKServerSpec : Spek({
     describe("zookeeper server tests without withSecurity") {
 
         val minSecurity = false
-        val zk = ZKServer(getAvailablePort(), zkDataDir, minSecurity)
+        val zk = ZKServer(getAvailablePort(), dataDirFor(zookeeperBasePath), minSecurity)
 
         (1..2).forEach { testZKCmds(this, zk, it) }
     }
@@ -42,12 +40,8 @@ object ZKServerSpec : Spek({
         val minSecurity = true
         setUpJAASContext()
 
-        val zk = ZKServer(getAvailablePort(), zkDataDir, minSecurity)
+        val zk = ZKServer(getAvailablePort(), dataDirFor(zookeeperBasePath), minSecurity)
 
         (1..2).forEach { testZKCmds(this, zk, it) }
-
-        afterGroup {
-            try { FileUtils.deleteDirectory(zkDataDir) } catch (e: IOException) { /* tried at least */ }
-        }
     }
 })

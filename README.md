@@ -172,6 +172,10 @@ for the set of available operations.
 
 ## Changelog
 
+### [2.1.1]
+
+- Improved path handling for temporary files (#7)
+
 ### [2.1.0]
 
 #### What's new?
