@@ -5,7 +5,7 @@
 
 A simple API for creating an embedded Kafka environment with the KafkaEnvironment class, typically used for running integration tests. 
 
-Based on the [Confluent Open Source distribution](https://www.confluent.io/product/confluent-open-source/) v5.0.0. 
+Based on the [Confluent Open Source distribution](https://www.confluent.io/product/confluent-open-source/) v5.3.0. 
 
 Instead of using the classic ports (2181, 9092, ...) for each server, the class will get the required number of available ports 
 and use those in configurations for each server. 
@@ -173,8 +173,8 @@ for the set of available operations.
 ## Changelog
 
 ### [2.2.0]
-- Upgrade to Kafka 2.2.1
-- Upgrade to confluent platform 5.2.2
+- Upgrade to Kafka 2.3.0
+- Upgrade to confluent platform 5.3.0
 
 ### [2.1.1]
 
