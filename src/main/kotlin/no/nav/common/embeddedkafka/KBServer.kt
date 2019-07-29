@@ -25,7 +25,7 @@ class KBServer(
 ) : ServerBase() {
 
     // see link for KafkaServerStartable below for starting up an embedded kafka broker
-    // https://github.com/apache/kafka/blob/2.0/core/src/main/scala/kafka/server/KafkaServerStartable.scala
+    // https://github.com/apache/kafka/blob/2.2/core/src/main/scala/kafka/server/KafkaServerStartable.scala
 
     override val url = if (withSecurity) "SASL_PLAINTEXT://$host:$port" else "PLAINTEXT://$host:$port"
 
