@@ -62,9 +62,9 @@ class ZKServer(override val port: Int, private val dataDir: Path, private val wi
 
     private fun waitForZookeeperOk(): Boolean =
     // sequence and lazy evaluation, will finish at the first true element in any
-            (1..40).asSequence()
+            (1..100).asSequence()
                     .map {
-                        Thread.sleep(20)
+                        Thread.sleep(50)
                         send4LCommand(ZookeeperCMDRSP.RUOK.cmd)
                     }.any { it == ZookeeperCMDRSP.RUOK.rsp }
 
