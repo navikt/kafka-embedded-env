@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:2.2.2"
+    testImplementation "no.nav:kafka-embedded-env:2.2.3"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>2.2.2</version>
+    <version>2.2.3</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -171,6 +171,9 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+
+### [2.2.3]
+- Increase default Zookeeper connection timeout from Kafka brokers in another attempt to remediate sporadically failing tests on slow machines
 
 ### [2.2.2]
 - Another attempt at increasing waiting attempts for embedded Zookeeper in attempt to remediate sporadically failing tests on slow machines  

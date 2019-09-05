@@ -81,7 +81,7 @@ class KBServer(
         set(KafkaConfig.AutoCreateTopicsEnableProp(), (!withSecurity).toString())
 
         set(KafkaConfig.ZkConnectProp(), zkURL)
-        set(KafkaConfig.ZkConnectionTimeoutMsProp(), 500)
+        set(KafkaConfig.ZkConnectionTimeoutMsProp(), 10_000)
         set(KafkaConfig.ZkSessionTimeoutMsProp(), 30_000)
 
         set(KafkaConfig.BrokerIdProp(), id)
