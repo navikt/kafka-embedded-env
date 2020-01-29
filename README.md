@@ -172,7 +172,7 @@ for the set of available operations.
 
 ## Changelog
 
-### [2.3.0]
+### [2.4.0]
 - Upgrade to Kafka 2.4.0
 - Upgrade to Confluent Platform 5.4.0
 
