@@ -5,7 +5,7 @@
 
 A simple API for creating an embedded Kafka environment with the KafkaEnvironment class, typically used for running integration tests. 
 
-Based on the [Confluent Open Source distribution](https://www.confluent.io/product/confluent-open-source/) v5.3.1. 
+Based on the [Confluent Open Source distribution](https://www.confluent.io/product/confluent-open-source/) v5.4.0. 
 
 Instead of using the classic ports (2181, 9092, ...) for each server, the class will get the required number of available ports 
 and use those in configurations for each server. 
@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:2.3.0"
+    testImplementation "no.nav:kafka-embedded-env:2.4.0"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>2.3.0</version>
+    <version>2.4.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -171,6 +171,10 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+
+### [2.3.0]
+- Upgrade to Kafka 2.4.0
+- Upgrade to Confluent Platform 5.4.0
 
 ### [2.3.0]
 - Use Kafka 2.3.1

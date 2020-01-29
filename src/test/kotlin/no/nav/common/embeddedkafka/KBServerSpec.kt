@@ -27,7 +27,7 @@ object KBServerSpec : Spek({
         val env = KafkaEnvironment(noOfBrokers = 2)
         var ac: AdminClient? = null
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -37,16 +37,16 @@ object KBServerSpec : Spek({
         }
 
         context("active embedded kafka cluster with 1 stopped broker") {
-            before { env.brokers.last().stop() }
+            beforeGroup { env.brokers.last().stop() }
             tests1B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
         context("active embedded kafka cluster of 1 restarted broker") {
-            before { env.brokers.last().start() }
+            beforeGroup { env.brokers.last().start() }
             tests2B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
@@ -57,14 +57,14 @@ object KBServerSpec : Spek({
         val env = KafkaEnvironment(noOfBrokers = 1, withSecurity = true)
         var ac: AdminClient? = null
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
 
         tests1B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }

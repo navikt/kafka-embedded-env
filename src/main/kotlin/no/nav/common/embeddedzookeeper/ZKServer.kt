@@ -33,6 +33,7 @@ class ZKServer(override val port: Int, private val dataDir: Path, private val wi
             set("dataDir", dataDir.toAbsolutePath().toString())
             set("clientPort", "$port")
             set("maxClientCnxns", "0")
+            set("4lw.commands.whitelist", "reqs,ruok")
             if (withSecurity) {
                 set("authProvider.1", "org.apache.zookeeper.server.auth.SASLAuthenticationProvider")
                 set("requireClientAuthScheme", "sasl")

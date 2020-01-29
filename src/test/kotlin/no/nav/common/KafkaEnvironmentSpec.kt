@@ -66,7 +66,7 @@ object KafkaEnvironmentSpec : Spek({
 
         context("basic verification") {
 
-            before {
+            beforeGroup {
                 env.start()
                 ac = env.adminClient
             }
@@ -81,7 +81,7 @@ object KafkaEnvironmentSpec : Spek({
 
             getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
 
-            after {
+            afterGroup {
                 ac?.close()
                 env.tearDown()
             }
@@ -113,7 +113,7 @@ object KafkaEnvironmentSpec : Spek({
         val env = KafkaEnvironment(topicNames = topics)
         var ac: AdminClient? = null
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -131,7 +131,7 @@ object KafkaEnvironmentSpec : Spek({
             ac.topics() shouldContainAll topics
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
@@ -149,7 +149,7 @@ object KafkaEnvironmentSpec : Spek({
         val env = KafkaEnvironment(topicNames = topicNames, topicInfos = topicInfos)
         var ac: AdminClient? = null
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -167,7 +167,7 @@ object KafkaEnvironmentSpec : Spek({
             ac.topics() shouldContainAll expectedTopicNames
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
@@ -177,7 +177,7 @@ object KafkaEnvironmentSpec : Spek({
 
         val env = KafkaEnvironment(noOfBrokers = 3)
 
-        before {
+        beforeGroup {
             env.start()
         }
 
@@ -189,7 +189,7 @@ object KafkaEnvironmentSpec : Spek({
             env.brokers.size shouldEqualTo 2
         }
 
-        after {
+        afterGroup {
             env.tearDown()
         }
     }
@@ -198,7 +198,7 @@ object KafkaEnvironmentSpec : Spek({
 
         val env = KafkaEnvironment(noOfBrokers = 0)
 
-        before {
+        beforeGroup {
             env.start()
         }
 
@@ -210,7 +210,7 @@ object KafkaEnvironmentSpec : Spek({
             env.brokers.size shouldEqualTo 0
         }
 
-        after {
+        afterGroup {
             env.tearDown()
         }
     }
@@ -222,7 +222,7 @@ object KafkaEnvironmentSpec : Spek({
         var ac: AdminClient? = null
         val client = HttpClient(Apache)
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -248,7 +248,7 @@ object KafkaEnvironmentSpec : Spek({
             }
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
@@ -260,7 +260,7 @@ object KafkaEnvironmentSpec : Spek({
         val env = KafkaEnvironment(noOfBrokers = 0, topicNames = topics)
         var ac: AdminClient? = null
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -278,7 +278,7 @@ object KafkaEnvironmentSpec : Spek({
             ac.topics() shouldContainAll topics
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
@@ -295,7 +295,7 @@ object KafkaEnvironmentSpec : Spek({
 
         val events = (1..9).map { "$it" to "event$it" }.toMap()
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -355,7 +355,7 @@ object KafkaEnvironmentSpec : Spek({
             } shouldContainAll events
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
@@ -371,7 +371,7 @@ object KafkaEnvironmentSpec : Spek({
 
         val events = (1..9).map { "$it" to "event$it" }.toMap()
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -422,7 +422,7 @@ object KafkaEnvironmentSpec : Spek({
             } shouldContainAll emptyMap()
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
@@ -436,7 +436,7 @@ object KafkaEnvironmentSpec : Spek({
 
         val events = (1..9).map { "$it" to "event$it" }.toMap()
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -487,7 +487,7 @@ object KafkaEnvironmentSpec : Spek({
             } shouldContainAll events
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
@@ -519,7 +519,7 @@ object KafkaEnvironmentSpec : Spek({
                     }
         }.toMap()
 
-        before {
+        beforeGroup {
             env.start()
             ac = env.adminClient
         }
@@ -556,7 +556,7 @@ object KafkaEnvironmentSpec : Spek({
             } shouldContainAll events
         }
 
-        after {
+        afterGroup {
             ac?.close()
             env.tearDown()
         }
