@@ -33,8 +33,8 @@ import org.spekframework.spek2.style.specification.describe
 object KafkaEnvironmentSpec : Spek({
 
     fun getTests(noBrokers: Int, topics: List<String>): List<TxtCmdRes> = listOf(
-            TxtCmdRes("should have '$noBrokers' of broker(s)", noOfBrokers, noBrokers),
-            TxtCmdRes("should have '${topics.size}' topics available", noOfTopics, topics.size)
+        TxtCmdRes("should have '$noBrokers' of broker(s)", noOfBrokers, noBrokers),
+        TxtCmdRes("should have '${topics.size}' topics available", noOfTopics, topics.size)
     )
 
     describe("default kafka environment") {
@@ -141,7 +141,7 @@ object KafkaEnvironmentSpec : Spek({
 
         val topicNames = listOf("basic01", "basic02")
         val topicInfos = listOf(
-                KafkaEnvironment.TopicInfo("advanced01", 4, mapOf("retention.ms" to "5000"))
+            KafkaEnvironment.TopicInfo("advanced01", 4, mapOf("retention.ms" to "5000"))
         )
 
         val expectedTopicNames = topicNames + topicInfos.map { it.name }
@@ -320,7 +320,9 @@ object KafkaEnvironmentSpec : Spek({
                     try {
                         it.createAcls(createProducerACL(mapOf(topics.first() to prod.username))).all().get()
                         true
-                    } catch (e: Exception) { false }
+                    } catch (e: Exception) {
+                        false
+                    }
                 } ?: false shouldEqualTo true
             }
 
@@ -329,29 +331,34 @@ object KafkaEnvironmentSpec : Spek({
                     try {
                         it.createAcls(createConsumerACL(mapOf(topics.first() to cons.username))).all().get()
                         true
-                    } catch (e: Exception) { false } } ?: false shouldEqualTo true
+                    } catch (e: Exception) {
+                        false
+                    }
+                } ?: false shouldEqualTo true
             }
         }
 
         it("should send all events $events to topic '$topics'") {
             runBlocking {
                 kafkaProduce(
-                        env.brokersURL,
-                        topics.first(),
-                        prod.username,
-                        prod.password,
-                        events)
+                    env.brokersURL,
+                    topics.first(),
+                    prod.username,
+                    prod.password,
+                    events
+                )
             } shouldEqualTo true
         }
 
         it("should consume all events $events from topic '$topics'") {
             runBlocking {
                 kafkaConsume(
-                        env.brokersURL,
-                        topics.first(),
-                        cons.username,
-                        cons.password,
-                        events.size)
+                    env.brokersURL,
+                    topics.first(),
+                    cons.username,
+                    cons.password,
+                    events.size
+                )
             } shouldContainAll events
         }
 
@@ -387,7 +394,9 @@ object KafkaEnvironmentSpec : Spek({
                     try {
                         it.createAcls(createProducerACL(mapOf(topics.first() to prod.username))).all().get()
                         true
-                    } catch (e: Exception) { false }
+                    } catch (e: Exception) {
+                        false
+                    }
                 } ?: false shouldEqualTo true
             }
 
@@ -396,29 +405,34 @@ object KafkaEnvironmentSpec : Spek({
                     try {
                         it.createAcls(createConsumerACL(mapOf(topics.first() to cons.username))).all().get()
                         true
-                    } catch (e: Exception) { false } } ?: false shouldEqualTo true
+                    } catch (e: Exception) {
+                        false
+                    }
+                } ?: false shouldEqualTo true
             }
         }
 
         it("should not send any events $events to topic '$topics'") {
             runBlocking {
                 kafkaProduce(
-                        env.brokersURL,
-                        topics.first(),
-                        prod.username,
-                        prod.password,
-                        events)
+                    env.brokersURL,
+                    topics.first(),
+                    prod.username,
+                    prod.password,
+                    events
+                )
             } shouldEqualTo false
         }
 
         it("should not consume any events $events from topic '$topics'") {
             runBlocking {
                 kafkaConsume(
-                        env.brokersURL,
-                        topics.first(),
-                        cons.username,
-                        cons.password,
-                        events.size)
+                    env.brokersURL,
+                    topics.first(),
+                    cons.username,
+                    cons.password,
+                    events.size
+                )
             } shouldContainAll emptyMap()
         }
 
@@ -452,7 +466,9 @@ object KafkaEnvironmentSpec : Spek({
                     try {
                         it.createAcls(createProducerACL(mapOf(topics.first() to kafkaP1.username))).all().get()
                         true
-                    } catch (e: Exception) { false }
+                    } catch (e: Exception) {
+                        false
+                    }
                 } ?: false shouldEqualTo true
             }
 
@@ -461,29 +477,34 @@ object KafkaEnvironmentSpec : Spek({
                     try {
                         it.createAcls(createConsumerACL(mapOf(topics.first() to kafkaC1.username))).all().get()
                         true
-                    } catch (e: Exception) { false } } ?: false shouldEqualTo true
+                    } catch (e: Exception) {
+                        false
+                    }
+                } ?: false shouldEqualTo true
             }
         }
 
         it("should send all events $events to topic '$topics'") {
             runBlocking {
                 kafkaProduce(
-                        env.brokersURL,
-                        topics.first(),
-                        kafkaP1.username,
-                        kafkaP1.password,
-                        events)
+                    env.brokersURL,
+                    topics.first(),
+                    kafkaP1.username,
+                    kafkaP1.password,
+                    events
+                )
             } shouldEqualTo true
         }
 
         it("should consume all events $events from topic '$topics'") {
             runBlocking {
                 kafkaConsume(
-                        env.brokersURL,
-                        topics.first(),
-                        kafkaC1.username,
-                        kafkaC1.password,
-                        events.size)
+                    env.brokersURL,
+                    topics.first(),
+                    kafkaC1.username,
+                    kafkaC1.password,
+                    events.size
+                )
             } shouldContainAll events
         }
 
@@ -514,9 +535,9 @@ object KafkaEnvironmentSpec : Spek({
 
         val events: Map<String, GenericRecord> = (1..9).map {
             "$it" to
-                    GenericData.Record(avroSchema).apply {
-                        put("number", it)
-                    }
+                GenericData.Record(avroSchema).apply {
+                    put("number", it)
+                }
         }.toMap()
 
         beforeGroup {
@@ -535,24 +556,26 @@ object KafkaEnvironmentSpec : Spek({
         it("should send all avro events $events to topic '$topics'") {
             runBlocking {
                 kafkaAvroProduce(
-                        env.brokersURL,
-                        env.schemaRegistry!!.url,
-                        topics.first(),
-                        kafkaClient.username,
-                        kafkaClient.password,
-                        events)
+                    env.brokersURL,
+                    env.schemaRegistry!!.url,
+                    topics.first(),
+                    kafkaClient.username,
+                    kafkaClient.password,
+                    events
+                )
             } shouldEqualTo true
         }
 
         it("should consume all avro events $events from topic '$topics'") {
             runBlocking {
                 kafkaAvroConsume(
-                        env.brokersURL,
-                        env.schemaRegistry!!.url,
-                        topics.first(),
-                        kafkaClient.username,
-                        kafkaClient.password,
-                        events.size)
+                    env.brokersURL,
+                    env.schemaRegistry!!.url,
+                    topics.first(),
+                    kafkaClient.username,
+                    kafkaClient.password,
+                    events.size
+                )
             } shouldContainAll events
         }
 

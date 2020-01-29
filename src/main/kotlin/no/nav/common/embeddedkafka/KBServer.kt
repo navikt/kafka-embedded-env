@@ -29,13 +29,15 @@ class KBServer(
 
     override val url = if (withSecurity) "SASL_PLAINTEXT://$host:$port" else "PLAINTEXT://$host:$port"
 
-    private val kafkaProperties = getDefaultProps(id, zkURL, noPartitions, dataDir.resolve("log"),
-            dataDir.resolve("logs"), dataDir.resolve("streams"), withSecurity)
+    private val kafkaProperties = getDefaultProps(
+        id, zkURL, noPartitions, dataDir.resolve("log"),
+        dataDir.resolve("logs"), dataDir.resolve("streams"), withSecurity
+    )
     private val broker = KafkaServer(
-            KafkaConfig(kafkaProperties),
-            Time.SYSTEM,
-            Option.apply(""),
-            KafkaMetricsReporter.startReporters(VerifiableProperties(kafkaProperties))
+        KafkaConfig(kafkaProperties),
+        Time.SYSTEM,
+        Option.apply(""),
+        KafkaMetricsReporter.startReporters(VerifiableProperties(kafkaProperties))
     )
 
     override fun start() = when (status) {
@@ -43,7 +45,8 @@ class KBServer(
             broker.startup()
             status = ServerStatus.Running
         }
-        else -> {}
+        else -> {
+        }
     }
 
     override fun stop() = when (status) {
@@ -52,7 +55,8 @@ class KBServer(
             broker.awaitShutdown()
             status = ServerStatus.NotRunning
         }
-        else -> {}
+        else -> {
+        }
     }
 
     private fun getDefaultProps(

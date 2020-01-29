@@ -14,12 +14,12 @@ object KBServerSpec : Spek({
     // too much housekeeping involved starting brokers without KafkaEnvironment
 
     val tests2B = listOf(
-            TxtCmdRes("should report 2 brokers", noOfBrokers, 2),
-            TxtCmdRes("should report 0 topics", noOfTopics, 0)
+        TxtCmdRes("should report 2 brokers", noOfBrokers, 2),
+        TxtCmdRes("should report 0 topics", noOfTopics, 0)
     )
     val tests1B = listOf(
-            TxtCmdRes("should report 1 broker", noOfBrokers, 1),
-            TxtCmdRes("should report 0 topics", noOfTopics, 0)
+        TxtCmdRes("should report 1 broker", noOfBrokers, 1),
+        TxtCmdRes("should report 0 topics", noOfTopics, 0)
     )
 
     describe("kafka broker tests without withSecurity") {

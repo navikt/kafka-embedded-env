@@ -47,7 +47,8 @@ class ZKServer(override val port: Int, private val dataDir: Path, private val wi
                 Files.newOutputStream(dataDir.resolve(fName)).use { out ->
                     propsBasic.store(out, "")
                 }
-            } catch (e: Exception) { /*  will get error when starting zookeeper */ }
+            } catch (e: Exception) { /*  will get error when starting zookeeper */
+            }
         }
 
         private fun start() {
@@ -62,12 +63,12 @@ class ZKServer(override val port: Int, private val dataDir: Path, private val wi
     private val zk = mutableListOf<ZKS>()
 
     private fun waitForZookeeperOk(): Boolean =
-    // sequence and lazy evaluation, will finish at the first true element in any
-            (1..2000).asSequence()
-                    .map {
-                        Thread.sleep(50)
-                        send4LCommand(ZookeeperCMDRSP.RUOK.cmd)
-                    }.any { it == ZookeeperCMDRSP.RUOK.rsp }
+        // sequence and lazy evaluation, will finish at the first true element in any
+        (1..2000).asSequence()
+            .map {
+                Thread.sleep(50)
+                send4LCommand(ZookeeperCMDRSP.RUOK.cmd)
+            }.any { it == ZookeeperCMDRSP.RUOK.rsp }
 
     override fun start() = when (status) {
         ServerStatus.NotRunning -> {
@@ -75,7 +76,8 @@ class ZKServer(override val port: Int, private val dataDir: Path, private val wi
             waitForZookeeperOk()
             status = ServerStatus.Running
         }
-        else -> {}
+        else -> {
+        }
     }
 
     override fun stop() = when (status) {
@@ -83,48 +85,62 @@ class ZKServer(override val port: Int, private val dataDir: Path, private val wi
             val zks = zk.first()
 
             // stop thread, see InterruptedException in zookeeper initializeAndRun
-            try { zks.zkThread.interrupt() } catch (e: Exception) { }
-            try { zks.zkThread.join() } catch (e: Exception) { }
+            try {
+                zks.zkThread.interrupt()
+            } catch (e: Exception) {
+            }
+            try {
+                zks.zkThread.join()
+            } catch (e: Exception) {
+            }
 
             zk.removeAll { true }
             status = ServerStatus.NotRunning
         }
-        else -> {}
+        else -> {
+        }
     }
 
     // minimum code for send and receive 4L commands
     // will return the response or string fourLEXCEPTION
 
     fun send4LCommand(cmd: String, timeout: Int = 100): String =
-            Socket()
-                    .apply { this.soTimeout = timeout }
-                    .use { socket ->
-                        try { socket.connect(InetSocketAddress(host, port), timeout) } catch (e: Exception) { }
-                        when (socket.isConnected) {
-                            false -> ZOOKEEPER_FOURLEXCEPTION
-                            else -> {
-                                // a couple of functions using socket in scope
-                                val sndCmd: () -> Boolean = {
-                                    try {
-                                        socket.getOutputStream().let { os ->
-                                            os.write(cmd.toByteArray())
-                                            os.flush()
-                                            socket.shutdownOutput()
-                                        }
-                                        true
-                                    } catch (e: Exception) { false }
+        Socket()
+            .apply { this.soTimeout = timeout }
+            .use { socket ->
+                try {
+                    socket.connect(InetSocketAddress(host, port), timeout)
+                } catch (e: Exception) {
+                }
+                when (socket.isConnected) {
+                    false -> ZOOKEEPER_FOURLEXCEPTION
+                    else -> {
+                        // a couple of functions using socket in scope
+                        val sndCmd: () -> Boolean = {
+                            try {
+                                socket.getOutputStream().let { os ->
+                                    os.write(cmd.toByteArray())
+                                    os.flush()
+                                    socket.shutdownOutput()
                                 }
-
-                                val rcvRsp: () -> String = {
-                                    try {
-                                        BufferedReader(InputStreamReader(socket.getInputStream()))
-                                                .use { br -> br.readLines() }
-                                                .fold("") { res, str -> res + str + "\n" }
-                                    } catch (e: Exception) { ZOOKEEPER_FOURLEXCEPTION }
-                                }
-
-                                if (sndCmd()) rcvRsp() else ZOOKEEPER_FOURLEXCEPTION
+                                true
+                            } catch (e: Exception) {
+                                false
                             }
                         }
+
+                        val rcvRsp: () -> String = {
+                            try {
+                                BufferedReader(InputStreamReader(socket.getInputStream()))
+                                    .use { br -> br.readLines() }
+                                    .fold("") { res, str -> res + str + "\n" }
+                            } catch (e: Exception) {
+                                ZOOKEEPER_FOURLEXCEPTION
+                            }
+                        }
+
+                        if (sndCmd()) rcvRsp() else ZOOKEEPER_FOURLEXCEPTION
                     }
+                }
+            }
 }
