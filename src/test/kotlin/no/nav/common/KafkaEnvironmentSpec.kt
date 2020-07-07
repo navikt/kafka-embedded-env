@@ -27,6 +27,7 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.common.config.ConfigResource
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -165,6 +166,17 @@ object KafkaEnvironmentSpec : Spek({
 
         it("should have topic(s) $expectedTopicNames available") {
             ac.topics() shouldContainAll expectedTopicNames
+        }
+
+        topicInfos.forEach { topicInfo ->
+            topicInfo.config?.forEach { (config, value) ->
+                it("should have config $config with $value for ${topicInfo.name}") {
+                    val describeConfigs = ac?.describeConfigs(topicInfos
+                            .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) })?.all()?.get()!!
+                            .map { (k, v) -> (k.name() to v.get(config).value()) }.toMap()
+                    describeConfigs["advanced01"] shouldEqual value
+                }
+            }
         }
 
         afterGroup {
