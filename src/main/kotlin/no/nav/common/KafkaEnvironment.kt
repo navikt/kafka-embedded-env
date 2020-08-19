@@ -291,7 +291,7 @@ class KafkaEnvironment(
         val replFactor = this.brokers.size
 
         this.adminClient?.use { ac ->
-            ac.createTopics(topics.map { topic -> NewTopic(topic.name, topic.partitions, replFactor.toShort()) })
+            ac.createTopics(topics.map { topic -> NewTopic(topic.name, topic.partitions, replFactor.toShort()).configs(topic.config) })
         }
 
         topicsCreated = true
