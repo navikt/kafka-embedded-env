@@ -24,6 +24,11 @@
 
     <repositories>
         <repository>
+            <name>Maven Central</name>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        <repository>
             <name>jcenter</name>
             <id>jcenter</id>
             <url>https://jcenter.bintray.com/</url>
@@ -32,11 +37,6 @@
             <name>confluent</name>
             <id>confluent</id>
             <url>https://packages.confluent.io/maven/</url>
-        </repository>
-        <repository>
-            <name>ktor</name>
-            <id>ktor</id>
-            <url>https://dl.bintray.com/kotlin/ktor</url>
         </repository>
         <repository>
             <name>spek</name>
