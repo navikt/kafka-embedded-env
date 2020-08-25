@@ -20,8 +20,6 @@ import org.amshove.kluent.`should not be`
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeGreaterOrEqualTo
 import org.amshove.kluent.shouldContainAll
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldEqualTo
 import org.amshove.kluent.shouldNotBe
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
@@ -47,21 +45,21 @@ object KafkaEnvironmentSpec : Spek({
         context("state tests - Initialized") {
 
             it("should have state initialized for ServerPark") {
-                env.serverPark.status shouldEqual KafkaEnvironment.ServerParkStatus.Initialized
+                env.serverPark.status shouldBeEqualTo KafkaEnvironment.ServerParkStatus.Initialized
             }
 
             it("should have state Available for brokerStatus") {
                 env.serverPark.brokerStatus shouldNotBe KafkaEnvironment.BrokerStatus.NotAvailable
-                env.brokers.size shouldEqualTo 1
+                env.brokers.size shouldBeEqualTo 1
                 env.brokersURL.length shouldBeGreaterOrEqualTo 1
             }
 
             it("should return null for adminClient") {
-                env.adminClient shouldEqual null
+                env.adminClient shouldBeEqualTo null
             }
 
             it("should have state NotAvailable for schemaRegStatus") {
-                env.serverPark.schemaRegStatus shouldEqual KafkaEnvironment.SchemaRegistryStatus.NotAvailable
+                env.serverPark.schemaRegStatus shouldBeEqualTo KafkaEnvironment.SchemaRegistryStatus.NotAvailable
             }
         }
 
@@ -73,14 +71,14 @@ object KafkaEnvironmentSpec : Spek({
             }
 
             it("should have state Started for ServerPark") {
-                env.serverPark.status shouldEqual KafkaEnvironment.ServerParkStatus.Started
+                env.serverPark.status shouldBeEqualTo KafkaEnvironment.ServerParkStatus.Started
             }
 
             it("should have 1 zookeeper with status ok") {
                 env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
 
             afterGroup {
                 ac?.close()
@@ -91,19 +89,19 @@ object KafkaEnvironmentSpec : Spek({
         context("state tests - epilogue") {
 
             it("should have state TearDownCompleted for ServerPark") {
-                env.serverPark.status shouldEqual KafkaEnvironment.ServerParkStatus.TearDownCompleted
+                env.serverPark.status shouldBeEqualTo KafkaEnvironment.ServerParkStatus.TearDownCompleted
             }
 
             it("should have state NotAvailable for brokerStatus") {
-                env.serverPark.brokerStatus shouldEqual KafkaEnvironment.BrokerStatus.NotAvailable
+                env.serverPark.brokerStatus shouldBeEqualTo KafkaEnvironment.BrokerStatus.NotAvailable
             }
 
             it("should return null for adminClient") {
-                env.adminClient shouldEqual null
+                env.adminClient shouldBeEqualTo null
             }
 
             it("should have state NotAvailable for schemaRegStatus") {
-                env.serverPark.schemaRegStatus shouldEqual KafkaEnvironment.SchemaRegistryStatus.NotAvailable
+                env.serverPark.schemaRegStatus shouldBeEqualTo KafkaEnvironment.SchemaRegistryStatus.NotAvailable
             }
         }
     }
@@ -125,7 +123,7 @@ object KafkaEnvironmentSpec : Spek({
                 env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
         }
 
         it("should have topic(s) $topics available") {
@@ -161,7 +159,7 @@ object KafkaEnvironmentSpec : Spek({
                 env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            getTests(1, expectedTopicNames).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            getTests(1, expectedTopicNames).forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
         }
 
         it("should have topic(s) $expectedTopicNames available") {
@@ -172,9 +170,9 @@ object KafkaEnvironmentSpec : Spek({
             topicInfo.config?.forEach { (config, value) ->
                 it("should have config $config with $value for ${topicInfo.name}") {
                     val describeConfigs = ac?.describeConfigs(topicInfos
-                            .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) })?.all()?.get()!!
-                            .map { (k, v) -> (k.name() to v.get(config).value()) }.toMap()
-                    describeConfigs["advanced01"] shouldEqual value
+                        .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) })?.all()?.get()!!
+                        .map { (k, v) -> (k.name() to v.get(config).value()) }.toMap()
+                    describeConfigs["advanced01"] shouldBeEqualTo value
                 }
             }
         }
@@ -198,7 +196,7 @@ object KafkaEnvironmentSpec : Spek({
         }
 
         it("should have maximum of 2 broker(s)") {
-            env.brokers.size shouldEqualTo 2
+            env.brokers.size shouldBeEqualTo 2
         }
 
         afterGroup {
@@ -219,7 +217,7 @@ object KafkaEnvironmentSpec : Spek({
         }
 
         it("should have 0 broker") {
-            env.brokers.size shouldEqualTo 0
+            env.brokers.size shouldBeEqualTo 0
         }
 
         afterGroup {
@@ -245,7 +243,7 @@ object KafkaEnvironmentSpec : Spek({
                 env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
         }
 
         it("should have topic(s) $topics available") {
@@ -255,7 +253,7 @@ object KafkaEnvironmentSpec : Spek({
 
         context("schema reg") {
 
-            scRegTests.forEach { txt, cmdRes ->
+            scRegTests.forEach { (txt, cmdRes) ->
                 it(txt) { httpReqResp(client, env.schemaRegistry!!, cmdRes.first) shouldBeEqualTo cmdRes.second }
             }
         }
@@ -283,7 +281,7 @@ object KafkaEnvironmentSpec : Spek({
                 env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
         }
 
         it("should have topic(s) $topics available") {
@@ -318,7 +316,7 @@ object KafkaEnvironmentSpec : Spek({
                 env.zookeeper.send4LCommand(ZookeeperCMDRSP.RUOK.cmd) shouldBeEqualTo ZookeeperCMDRSP.RUOK.rsp
             }
 
-            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            getTests(1, topics).forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
         }
 
         it("should have topic(s) '$topics' available") {
@@ -335,7 +333,7 @@ object KafkaEnvironmentSpec : Spek({
                     } catch (e: Exception) {
                         false
                     }
-                } ?: false shouldEqualTo true
+                } ?: false shouldBeEqualTo true
             }
 
             it("should successfully create consumer ACL") {
@@ -346,7 +344,7 @@ object KafkaEnvironmentSpec : Spek({
                     } catch (e: Exception) {
                         false
                     }
-                } ?: false shouldEqualTo true
+                } ?: false shouldBeEqualTo true
             }
         }
 
@@ -359,7 +357,7 @@ object KafkaEnvironmentSpec : Spek({
                     prod.password,
                     events
                 )
-            } shouldEqualTo true
+            } shouldBeEqualTo true
         }
 
         it("should consume all events $events from topic '$topics'") {
@@ -409,7 +407,7 @@ object KafkaEnvironmentSpec : Spek({
                     } catch (e: Exception) {
                         false
                     }
-                } ?: false shouldEqualTo true
+                } ?: false shouldBeEqualTo true
             }
 
             it("should successfully create consumer ACL") {
@@ -420,7 +418,7 @@ object KafkaEnvironmentSpec : Spek({
                     } catch (e: Exception) {
                         false
                     }
-                } ?: false shouldEqualTo true
+                } ?: false shouldBeEqualTo true
             }
         }
 
@@ -433,7 +431,7 @@ object KafkaEnvironmentSpec : Spek({
                     prod.password,
                     events
                 )
-            } shouldEqualTo false
+            } shouldBeEqualTo false
         }
 
         it("should not consume any events $events from topic '$topics'") {
@@ -481,7 +479,7 @@ object KafkaEnvironmentSpec : Spek({
                     } catch (e: Exception) {
                         false
                     }
-                } ?: false shouldEqualTo true
+                } ?: false shouldBeEqualTo true
             }
 
             it("should successfully create consumer ACL") {
@@ -492,7 +490,7 @@ object KafkaEnvironmentSpec : Spek({
                     } catch (e: Exception) {
                         false
                     }
-                } ?: false shouldEqualTo true
+                } ?: false shouldBeEqualTo true
             }
         }
 
@@ -505,7 +503,7 @@ object KafkaEnvironmentSpec : Spek({
                     kafkaP1.password,
                     events
                 )
-            } shouldEqualTo true
+            } shouldBeEqualTo true
         }
 
         it("should consume all events $events from topic '$topics'") {
@@ -575,7 +573,7 @@ object KafkaEnvironmentSpec : Spek({
                     kafkaClient.password,
                     events
                 )
-            } shouldEqualTo true
+            } shouldBeEqualTo true
         }
 
         it("should consume all avro events $events from topic '$topics'") {

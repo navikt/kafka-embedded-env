@@ -4,7 +4,7 @@ import no.nav.common.KafkaEnvironment
 import no.nav.common.test.common.TxtCmdRes
 import no.nav.common.test.common.noOfBrokers
 import no.nav.common.test.common.noOfTopics
-import org.amshove.kluent.shouldEqualTo
+import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.admin.AdminClient
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -33,17 +33,17 @@ object KBServerSpec : Spek({
         }
 
         context("active embedded kafka cluster of two brokers") {
-            tests2B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            tests2B.forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
         }
 
         context("active embedded kafka cluster with 1 stopped broker") {
             beforeGroup { env.brokers.last().stop() }
-            tests1B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            tests1B.forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
         }
 
         context("active embedded kafka cluster of 1 restarted broker") {
             beforeGroup { env.brokers.last().start() }
-            tests2B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+            tests2B.forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
         }
 
         afterGroup {
@@ -62,7 +62,7 @@ object KBServerSpec : Spek({
             ac = env.adminClient
         }
 
-        tests1B.forEach { it(it.txt) { it.cmd(ac) shouldEqualTo it.res } }
+        tests1B.forEach { it(it.txt) { it.cmd(ac) shouldBeEqualTo it.res } }
 
         afterGroup {
             ac?.close()

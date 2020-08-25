@@ -1,6 +1,6 @@
 package no.nav.common.test.common
 
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
@@ -226,7 +226,7 @@ suspend fun kafkaAvroProduce(
                     "org.apache.kafka.common.serialization.StringSerializer"
                 )
                 set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "io.confluent.kafka.serializers.KafkaAvroSerializer")
-                set(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
+                set(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
                 set(ProducerConfig.ACKS_CONFIG, "all")
                 set(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
                 set(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 500)
@@ -270,7 +270,7 @@ suspend fun kafkaAvroConsume(
                     ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
                     "io.confluent.kafka.serializers.KafkaAvroDeserializer"
                 )
-                set(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
+                set(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
                 set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
                 set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
                 set(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 4)
