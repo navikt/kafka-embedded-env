@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
@@ -210,7 +211,8 @@
                         <include>**/*Spec.*</include>
                     </includes>
                     <systemPropertyVariables>
-                        <logback.configurationFile>${basedir}/src/test/resources/logback-silent.xml</logback.configurationFile>
+                        <logback.configurationFile>${basedir}/src/test/resources/logback-silent.xml
+                        </logback.configurationFile>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -298,7 +300,8 @@
     </licenses>
     <developers>
         <developer>
-            <organization>NAV (Arbeids- og velferdsdirektoratet) - The Norwegian Labour and Welfare Administration</organization>
+            <organization>NAV (Arbeids- og velferdsdirektoratet) - The Norwegian Labour and Welfare Administration
+            </organization>
             <organizationUrl>https://www.nav.no</organizationUrl>
         </developer>
     </developers>
@@ -322,7 +325,22 @@
 
     <profiles>
         <profile>
-            <id>release</id>
+            <id>deploy-to-sonatype</id>
+            <activation>
+                <property>
+                    <name>deploy-to-sonatype</name>
+                </property>
+            </activation>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
             <build>
                 <plugins>
                     <plugin>
@@ -336,8 +354,35 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <executions>
+                            <execution>
+                                <id>default-deploy</id>
+                                <phase>deploy</phase>
+                                <!-- By default, this is the phase deploy
+                                    goal will bind to -->
+                                <goals>
+                                    <goal>deploy</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <serverId>ossrh</serverId>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
