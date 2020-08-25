@@ -253,7 +253,7 @@
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <useReleaseProfile>true</useReleaseProfile>
-                    <releaseProfiles>release</releaseProfiles>
+                    <releaseProfiles>deploy-to-sonatype</releaseProfiles>
                     <goals>deploy</goals>
                 </configuration>
             </plugin>
