@@ -172,6 +172,11 @@ for the set of available operations.
 
 ## Changelog
 
+### [2.5.0]
+- Upgrade to Kafka 2.5.0
+- Upgrade to Confluent Platform 5.5.0
+- Fixes issue where config overrides were not passed to the AdminClient
+
 ### [2.4.0]
 - Upgrade to Kafka 2.4.0
 - Upgrade to Confluent Platform 5.4.0
