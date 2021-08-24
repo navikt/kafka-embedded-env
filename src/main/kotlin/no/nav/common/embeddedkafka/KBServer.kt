@@ -1,9 +1,7 @@
 package no.nav.common.embeddedkafka
 
-import kafka.metrics.KafkaMetricsReporter
 import kafka.server.KafkaConfig
 import kafka.server.KafkaServer
-import kafka.utils.VerifiableProperties
 import no.nav.common.embeddedutils.ServerBase
 import no.nav.common.embeddedutils.ServerStatus
 import no.nav.common.kafkaAdmin
@@ -37,7 +35,7 @@ class KBServer(
         KafkaConfig(kafkaProperties),
         Time.SYSTEM,
         Option.apply(""),
-        KafkaMetricsReporter.startReporters(VerifiableProperties(kafkaProperties))
+            false
     )
 
     override fun start() = when (status) {
