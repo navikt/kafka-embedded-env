@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:2.7.0"
+    testImplementation "no.nav:kafka-embedded-env:2.8.0"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>2.7.0</version>
+    <version>2.8.0</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -171,6 +171,10 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+
+### [2.8.0]
+- Upgrade to Kafka 2.8.0
+- Upgrade to Confluent Platform 6.2.0
 
 ### [2.7.0]
 - Upgrade to Kafka 2.7.0
