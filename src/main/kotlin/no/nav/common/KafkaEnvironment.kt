@@ -13,7 +13,8 @@ import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.config.SaslConfigs
 import java.nio.file.Files
-import java.util.*
+import java.util.Properties
+import java.util.UUID
 
 /**
  * A in-memory kafka environment consisting of
