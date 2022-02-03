@@ -66,7 +66,7 @@ dependencies {
 ```
 
 **Note**: It is recommended that you use the Confluent version matching this library - currently v6.x
-(i.e. Kafka v2.x, though it is likely that Confluent v4.x/Kafka v1.x will also work)
+(i.e. Kafka v3.x, though it is likely that Confluent v4.x/Kafka v1.x will also work)
 
 ## Examples
 ### Default
