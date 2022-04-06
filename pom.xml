@@ -17,7 +17,7 @@
         <spek.version>2.0.17</spek.version>
         <kluent.version>1.68</kluent.version>
         <logback.version>1.2.7</logback.version>
-        <slf4j.version>1.7.32</slf4j.version>
+        <slf4j.version>1.7.33</slf4j.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
