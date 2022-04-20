@@ -74,7 +74,7 @@ class KBServer(
             set("security.inter.broker.protocol", "SASL_PLAINTEXT")
             set("sasl.mechanism.inter.broker.protocol", "PLAIN")
             set("sasl.enabled.mechanisms", "PLAIN")
-            set("authorizer.class.name", "kafka.security.auth.SimpleAclAuthorizer")
+            set("authorizer.class.name", "kafka.security.authorizer.AclAuthorizer")
             set("super.users", "User:${kafkaAdmin.username};User:${kafkaClient.username}")
             // allow.everyone.if.no.acl.found=true
             // auto.create.topics.enable=false
