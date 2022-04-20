@@ -14,7 +14,7 @@
         <kafka.version>3.1.0</kafka.version>
         <ktor.version>1.6.8</ktor.version>
         <confluent.version>7.1.0</confluent.version>
-        <spek.version>2.0.17</spek.version>
+        <spek.version>2.0.18</spek.version>
         <kluent.version>1.68</kluent.version>
         <logback.version>1.2.11</logback.version>
         <slf4j.version>1.7.33</slf4j.version>
