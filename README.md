@@ -65,7 +65,7 @@ dependencies {
 </dependency>
 ```
 
-**Note**: It is recommended that you use the Confluent version matching this library - currently v7.0.x
+**Note**: It is recommended that you use the Confluent version matching this library - currently v7.1.x
 
 ## Examples
 ### Default
