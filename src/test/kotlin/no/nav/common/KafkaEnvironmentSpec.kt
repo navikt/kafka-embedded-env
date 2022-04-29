@@ -169,8 +169,10 @@ object KafkaEnvironmentSpec : Spek({
         topicInfos.forEach { topicInfo ->
             topicInfo.config?.forEach { (config, value) ->
                 it("should have config $config with $value for ${topicInfo.name}") {
-                    val describeConfigs = ac?.describeConfigs(topicInfos
-                        .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) })?.all()?.get()!!
+                    val describeConfigs = ac?.describeConfigs(
+                        topicInfos
+                            .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) }
+                    )?.all()?.get()!!
                         .map { (k, v) -> (k.name() to v.get(config).value()) }.toMap()
                     describeConfigs["advanced01"] shouldBeEqualTo value
                 }
@@ -539,7 +541,7 @@ object KafkaEnvironmentSpec : Spek({
                       ]
                     }
 
-                """.trimIndent()
+        """.trimIndent()
 
         val avroSchema = Schema.Parser().parse(schemaSource)
 

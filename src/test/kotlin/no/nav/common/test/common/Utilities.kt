@@ -2,6 +2,7 @@ package no.nav.common.test.common
 
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.url
@@ -72,7 +73,7 @@ suspend fun HttpClient.getSomething(endpoint: URL): String =
     this.get {
         url(endpoint)
         accept(ContentType.Application.Json)
-    }
+    }.body()
 
 val httpReqResp: (HttpClient, ServerBase, String) -> String = { client, sr, path ->
     try {
