@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:3.1.2"
+    testImplementation "no.nav:kafka-embedded-env:3.1.3"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>3.1.2</version>
+    <version>3.1.3</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -170,6 +170,10 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+
+### [3.1.3]
+- Dependency bumps Confluent 7.1.1
+- Github actions setup-java to v3
 
 ### [3.1.2]
 - Bad merge fix
