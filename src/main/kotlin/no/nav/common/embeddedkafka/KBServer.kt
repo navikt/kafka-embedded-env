@@ -35,7 +35,7 @@ class KBServer(
         KafkaConfig(kafkaProperties),
         Time.SYSTEM,
         Option.apply(""),
-            false
+        false
     )
 
     override fun start() = when (status) {
