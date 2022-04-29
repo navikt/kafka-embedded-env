@@ -99,7 +99,8 @@ class KafkaEnvironment(
                             set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
                             set(SaslConfigs.SASL_MECHANISM, "PLAIN")
                             set(
-                                SaslConfigs.SASL_JAAS_CONFIG, "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED " +
+                                SaslConfigs.SASL_JAAS_CONFIG,
+                                "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED " +
                                     "username=\"${kafkaClient.username}\" password=\"${kafkaClient.password}\";"
                             )
                         }
