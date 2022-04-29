@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:3.1.1"
+    testImplementation "no.nav:kafka-embedded-env:3.1.2"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>3.1.1</version>
+    <version>3.1.2</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -170,6 +170,9 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+
+### [3.1.2]
+- Bad merge fix
 
 ### [3.1.1]
 - Upgrade to Kotlin 1.6.20
