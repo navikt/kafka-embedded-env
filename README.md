@@ -172,7 +172,7 @@ for the set of available operations.
 ## Changelog
 
 ### [3.1.2]
-- Fix for issue: https://github.com/navikt/kafka-embedded-env/issues/20
+- Bad merge fix
 
 ### [3.1.1]
 - Upgrade to Kotlin 1.6.20
