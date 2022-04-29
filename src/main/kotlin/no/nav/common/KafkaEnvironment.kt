@@ -4,7 +4,6 @@ import no.nav.common.embeddedkafka.KBServer
 import no.nav.common.embeddedschemaregistry.SRServer
 import no.nav.common.embeddedutils.ServerBase
 import no.nav.common.embeddedutils.appDirFor
-import no.nav.common.embeddedutils.dataDirFor
 import no.nav.common.embeddedutils.deleteDir
 import no.nav.common.embeddedutils.getAvailablePort
 import no.nav.common.embeddedzookeeper.ZKServer
@@ -13,7 +12,9 @@ import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.config.SaslConfigs
+import java.nio.file.Files
 import java.util.Properties
+import java.util.UUID
 
 /**
  * A in-memory kafka environment consisting of
@@ -157,8 +158,9 @@ class KafkaEnvironment(
     // in case of start of environment will be manually triggered later on
     private var topicsCreated = false
 
-    private val zookeeperDataBaseDir = appDirFor("inmemoryzookeeper")
-    private val kafkaBrokerDataBaseDir = appDirFor("inmemorykafkabroker")
+    private val tempDir = appDirFor(UUID.randomUUID().toString())
+    private val zookeeperDataDir = tempDir.resolve("inmemoryzookeeper")
+    private val brokerDataDir = tempDir.resolve("inmemorykafkabroker")
 
     var serverPark: ServerPark
         private set
@@ -170,14 +172,17 @@ class KafkaEnvironment(
             setUpJAASContext()
         }
 
-        val zk = ZKServer(getAvailablePort(), dataDirFor(zookeeperDataBaseDir), withSecurity)
+        Files.createDirectories(zookeeperDataDir)
+        Files.createDirectories(brokerDataDir)
+
+        val zk = ZKServer(getAvailablePort(), zookeeperDataDir, withSecurity)
 
         val kBrokers = (0 until reqNoOfBrokers).map {
             KBServer(
                 getAvailablePort(),
                 it,
                 reqNoOfBrokers,
-                dataDirFor(kafkaBrokerDataBaseDir),
+                brokerDataDir,
                 zk.url,
                 withSecurity,
                 brokerConfigOverrides
@@ -267,8 +272,7 @@ class KafkaEnvironment(
             }
         }
 
-        deleteDir(zookeeperDataBaseDir)
-        deleteDir(kafkaBrokerDataBaseDir)
+        deleteDir(tempDir)
 
         serverPark = ServerPark(
             serverPark.zookeeper,
