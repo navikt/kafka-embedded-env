@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:3.1.3"
+    testImplementation "no.nav:kafka-embedded-env:3.1.4"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>3.1.3</version>
+    <version>3.1.4</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -170,6 +170,10 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+
+### [3.1.4]
+- Upgrade to Ktor 2.0.1
+- Change to use Apache maven wrapper
 
 ### [3.1.3]
 - Dependency bumps Confluent 7.1.1
