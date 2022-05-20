@@ -138,6 +138,10 @@
                     <groupId>org.jetbrains.kotlin</groupId>
                     <artifactId>*</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -219,7 +223,7 @@
                         <include>**/*Spec.*</include>
                     </includes>
                     <systemPropertyVariables>
-                        <logback.configurationFile>${basedir}/src/test/resources/logback-silent.xml
+                        <logback.configurationFile>${project.basedir}/src/test/resources/logback-silent.xml
                         </logback.configurationFile>
                     </systemPropertyVariables>
                 </configuration>
@@ -249,7 +253,7 @@
                         </goals>
                         <configuration>
                             <classifier>javadoc</classifier>
-                            <classesDirectory>${basedir}/src/main/javadoc</classesDirectory>
+                            <classesDirectory>${project.basedir}/src/main/javadoc</classesDirectory>
                         </configuration>
                     </execution>
                 </executions>
