@@ -12,7 +12,7 @@
     <properties>
         <kotlin.version>1.6.21</kotlin.version>
         <kafka.version>3.1.0</kafka.version>
-        <ktor.version>2.0.1</ktor.version>
+        <ktor.version>2.0.2</ktor.version>
         <confluent.version>7.1.1</confluent.version>
         <spek.version>2.0.18</spek.version>
         <kluent.version>1.68</kluent.version>
