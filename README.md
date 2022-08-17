@@ -5,7 +5,7 @@
 
 A simple API for creating an embedded Kafka environment with the KafkaEnvironment class, typically used for running integration tests. 
 
-Based on the [Confluent Open Source distribution](https://www.confluent.io/product/confluent-open-source/) v7.1.x.
+Based on the [Confluent Open Source distribution](https://www.confluent.io/product/confluent-open-source/) v7.2.x.
 
 Instead of using the classic ports (2181, 9092, ...) for each server, the class will get the required number of available ports 
 and use those in configurations for each server. 
@@ -60,12 +60,12 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>3.1.4</version>
+    <version>3.1.7</version>
     <scope>test</scope>
 </dependency>
 ```
 
-**Note**: It is recommended that you use the Confluent version matching this library - currently v7.1.x
+**Note**: It is recommended that you use the Confluent version matching this library - currently v7.2.x
 
 ## Examples
 ### Default
@@ -170,6 +170,10 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+### [3.1.7]
+- Upgrade to Confluent 7.2.1
+- Upgrade to Ktor 2.0.3
+- Upgrade to Kafka 3.2
 
 ### [3.1.4]
 - Upgrade to Ktor 2.0.1
