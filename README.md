@@ -170,7 +170,7 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
-### [3.2.0]
+### [3.1.8]
 - Fix Snyk issues
 
 ### [3.1.7]
