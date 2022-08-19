@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:3.2.0"
+    testImplementation "no.nav:kafka-embedded-env:3.2.1"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>3.2.0</version>
+    <version>3.2.1</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -170,6 +170,9 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+### [3.2.1]
+- Moved some dependencies from scope test
+
 ### [3.2.0]
 - Fix Snyk issues
 
