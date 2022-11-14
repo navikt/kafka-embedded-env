@@ -25,7 +25,7 @@
         <commons.collections4.version>4.4</commons.collections4.version>
         <protobuf.java.version>3.20.1</protobuf.java.version>
         <javax.el.api.version>3.0.0</javax.el.api.version>
-        <netty.common.version>4.1.77.Final</netty.common.version>
+        <netty.common.version>4.1.85.Final</netty.common.version>
         <jackson-databind.version>2.13.3</jackson-databind.version>
     </properties>
 
