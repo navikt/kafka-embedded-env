@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:3.2.1"
+    testImplementation "no.nav:kafka-embedded-env:3.2.2"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>3.2.1</version>
+    <version>3.2.2</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -170,6 +170,12 @@ for the set of available operations.
 **Please close adminClient after use.**
 
 ## Changelog
+
+### [3.2.2]
+- Upgrade to Confluent 7.3.1
+- Upgrade to Kafka 3.2.3
+- Upgrade to Surefire 3.0.0-M8
+
 ### [3.2.1]
 - Moved some dependencies from scope test
 
