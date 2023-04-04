@@ -33,7 +33,7 @@ object KafkaEnvironmentSpec : Spek({
 
     fun getTests(noBrokers: Int, topics: List<String>): List<TxtCmdRes> = listOf(
         TxtCmdRes("should have '$noBrokers' of broker(s)", noOfBrokers, noBrokers),
-        TxtCmdRes("should have '${topics.size}' topics available", noOfTopics, topics.size)
+        TxtCmdRes("should have '${topics.size}' topics available", noOfTopics, topics.size),
     )
 
     describe("default kafka environment") {
@@ -140,7 +140,7 @@ object KafkaEnvironmentSpec : Spek({
 
         val topicNames = listOf("basic01", "basic02")
         val topicInfos = listOf(
-            KafkaEnvironment.TopicInfo("advanced01", 4, mapOf("retention.ms" to "5000"))
+            KafkaEnvironment.TopicInfo("advanced01", 4, mapOf("retention.ms" to "5000")),
         )
 
         val expectedTopicNames = topicNames + topicInfos.map { it.name }
@@ -171,7 +171,7 @@ object KafkaEnvironmentSpec : Spek({
                 it("should have config $config with $value for ${topicInfo.name}") {
                     val describeConfigs = ac?.describeConfigs(
                         topicInfos
-                            .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) }
+                            .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) },
                     )?.all()?.get()!!
                         .map { (k, v) -> (k.name() to v.get(config).value()) }.toMap()
                     describeConfigs["advanced01"] shouldBeEqualTo value
@@ -357,7 +357,7 @@ object KafkaEnvironmentSpec : Spek({
                     topics.first(),
                     prod.username,
                     prod.password,
-                    events
+                    events,
                 )
             } shouldBeEqualTo true
         }
@@ -369,7 +369,7 @@ object KafkaEnvironmentSpec : Spek({
                     topics.first(),
                     cons.username,
                     cons.password,
-                    events.size
+                    events.size,
                 )
             } shouldContainAll events
         }
@@ -431,7 +431,7 @@ object KafkaEnvironmentSpec : Spek({
                     topics.first(),
                     prod.username,
                     prod.password,
-                    events
+                    events,
                 )
             } shouldBeEqualTo false
         }
@@ -443,7 +443,7 @@ object KafkaEnvironmentSpec : Spek({
                     topics.first(),
                     cons.username,
                     cons.password,
-                    events.size
+                    events.size,
                 )
             } shouldContainAll emptyMap()
         }
@@ -503,7 +503,7 @@ object KafkaEnvironmentSpec : Spek({
                     topics.first(),
                     kafkaP1.username,
                     kafkaP1.password,
-                    events
+                    events,
                 )
             } shouldBeEqualTo true
         }
@@ -515,7 +515,7 @@ object KafkaEnvironmentSpec : Spek({
                     topics.first(),
                     kafkaC1.username,
                     kafkaC1.password,
-                    events.size
+                    events.size,
                 )
             } shouldContainAll events
         }
@@ -573,7 +573,7 @@ object KafkaEnvironmentSpec : Spek({
                     topics.first(),
                     kafkaClient.username,
                     kafkaClient.password,
-                    events
+                    events,
                 )
             } shouldBeEqualTo true
         }
@@ -586,7 +586,7 @@ object KafkaEnvironmentSpec : Spek({
                     topics.first(),
                     kafkaClient.username,
                     kafkaClient.password,
-                    events.size
+                    events.size,
                 )
             } shouldContainAll events
         }

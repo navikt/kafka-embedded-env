@@ -51,7 +51,7 @@ class KafkaEnvironment(
     val withSecurity: Boolean = false,
     users: List<JAASCredential> = emptyList(),
     autoStart: Boolean = false,
-    brokerConfigOverrides: Properties = Properties()
+    brokerConfigOverrides: Properties = Properties(),
 ) : AutoCloseable {
     data class TopicInfo(val name: String, val partitions: Int = 2, val config: Map<String, String>? = null)
 
@@ -60,7 +60,7 @@ class KafkaEnvironment(
     sealed class BrokerStatus {
         data class Available(
             val brokers: List<ServerBase>,
-            val brokersURL: String
+            val brokersURL: String,
         ) : BrokerStatus()
 
         object NotAvailable : BrokerStatus()
@@ -90,7 +90,7 @@ class KafkaEnvironment(
 
     private fun BrokerStatus.createAdminClient(): AdminClient? = when (this) {
         is BrokerStatus.Available ->
-            if (serverPark.status is ServerParkStatus.Started)
+            if (serverPark.status is ServerParkStatus.Started) {
                 AdminClient.create(
                     Properties().apply {
                         set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
@@ -101,12 +101,14 @@ class KafkaEnvironment(
                             set(
                                 SaslConfigs.SASL_JAAS_CONFIG,
                                 "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED " +
-                                    "username=\"${kafkaClient.username}\" password=\"${kafkaClient.password}\";"
+                                    "username=\"${kafkaClient.username}\" password=\"${kafkaClient.password}\";",
                             )
                         }
-                    }
+                    },
                 )
-            else null
+            } else {
+                null
+            }
         else -> null
     }
 
@@ -143,7 +145,7 @@ class KafkaEnvironment(
         val zookeeper: ServerBase,
         val brokerStatus: BrokerStatus,
         val schemaRegStatus: SchemaRegistryStatus,
-        val status: ServerParkStatus
+        val status: ServerParkStatus,
     )
 
     // in case of strange config
@@ -180,7 +182,7 @@ class KafkaEnvironment(
                 dataDirFor(kafkaBrokerDataBaseDir),
                 zk.url,
                 withSecurity,
-                brokerConfigOverrides
+                brokerConfigOverrides,
             )
         }
         val brokersURL = kBrokers.map { it.url }.foldRight("") { u, acc ->
@@ -197,7 +199,7 @@ class KafkaEnvironment(
                 false -> SchemaRegistryStatus.NotAvailable
                 else -> SchemaRegistryStatus.Available(SRServer(getAvailablePort(), brokersURL, withSecurity))
             },
-            ServerParkStatus.Initialized
+            ServerParkStatus.Initialized,
         )
 
         if (autoStart) start()
@@ -214,7 +216,6 @@ class KafkaEnvironment(
      * Start the kafka environment
      */
     fun start() {
-
         when (serverPark.status) {
             is ServerParkStatus.Started -> return
             is ServerParkStatus.TearDownCompleted -> return
@@ -230,15 +231,15 @@ class KafkaEnvironment(
             ServerPark(sp.zookeeper, sp.brokerStatus, sp.schemaRegStatus, ServerParkStatus.Started)
         }
 
-        if (serverPark.brokerStatus is BrokerStatus.Available && topics.isNotEmpty() && !topicsCreated)
+        if (serverPark.brokerStatus is BrokerStatus.Available && topics.isNotEmpty() && !topicsCreated) {
             createTopics(topics)
+        }
     }
 
     /**
      * Stop the kafka environment
      */
     private fun stop() {
-
         when (serverPark.status) {
             is ServerParkStatus.Stopped -> return
             is ServerParkStatus.TearDownCompleted -> return
@@ -259,7 +260,6 @@ class KafkaEnvironment(
      * Tear down the kafka environment, removing all data created in environment
      */
     fun tearDown() {
-
         when (serverPark.status) {
             is ServerParkStatus.TearDownCompleted -> return
             is ServerParkStatus.Started -> stop()
@@ -274,7 +274,7 @@ class KafkaEnvironment(
             serverPark.zookeeper,
             BrokerStatus.NotAvailable,
             SchemaRegistryStatus.NotAvailable,
-            ServerParkStatus.TearDownCompleted
+            ServerParkStatus.TearDownCompleted,
         )
     }
 
@@ -286,7 +286,6 @@ class KafkaEnvironment(
     // https://kafka.apache.org/20/javadoc/org/apache/kafka/clients/admin/AdminClient.html#createTopics-java.util.Collection-
 
     private fun createTopics(topics: List<TopicInfo>) {
-
         // this func is only invoked if broker(s) are available and started
 
         val replFactor = this.brokers.size
