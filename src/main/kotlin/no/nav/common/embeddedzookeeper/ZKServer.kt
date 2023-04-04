@@ -16,7 +16,7 @@ const val ZOOKEEPER_FOURLEXCEPTION = "4LEXCEPTION"
 
 enum class ZookeeperCMDRSP(val cmd: String, val rsp: String) {
     RUOK("ruok", "imok\n"),
-    REQS("reqs", "") // prerequisite is idle zookeeper
+    REQS("reqs", ""), // prerequisite is idle zookeeper
 }
 
 class ZKServer(override val port: Int, private val dataDir: Path, private val withSecurity: Boolean) : ServerBase() {

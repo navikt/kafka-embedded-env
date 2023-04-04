@@ -66,7 +66,7 @@ const val SCHEMAREG_NoSubjects = """[]"""
 
 val scRegTests = mapOf(
     "should report default compatibility level" to Pair("/config", SCHEMAREG_DefaultCompatibilityLevel),
-    "should report zero subjects" to Pair("/subjects", SCHEMAREG_NoSubjects)
+    "should report zero subjects" to Pair("/subjects", SCHEMAREG_NoSubjects),
 )
 
 suspend fun HttpClient.getSomething(endpoint: URL): String =
@@ -125,7 +125,7 @@ suspend fun kafkaProduce(
     topic: String,
     user: String,
     pwd: String,
-    data: Map<String, String>
+    data: Map<String, String>,
 ): Boolean =
     try {
         KafkaProducer<String, String>(
@@ -134,11 +134,11 @@ suspend fun kafkaProduce(
                 set(ProducerConfig.CLIENT_ID_CONFIG, "funKafkaProduce")
                 set(
                     ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                    "org.apache.kafka.common.serialization.StringSerializer"
+                    "org.apache.kafka.common.serialization.StringSerializer",
                 )
                 set(
                     ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                    "org.apache.kafka.common.serialization.StringSerializer"
+                    "org.apache.kafka.common.serialization.StringSerializer",
                 )
                 set(ProducerConfig.ACKS_CONFIG, "all")
                 set(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
@@ -147,9 +147,9 @@ suspend fun kafkaProduce(
                 set(SaslConfigs.SASL_MECHANISM, "PLAIN")
                 set(
                     SaslConfigs.SASL_JAAS_CONFIG,
-                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";"
+                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";",
                 )
-            }
+            },
         ).use { p ->
             withTimeoutOrNull(10_000) {
                 data.forEach { k, v -> p.send(ProducerRecord(topic, k, v)).get() }
@@ -165,7 +165,7 @@ suspend fun kafkaConsume(
     topic: String,
     user: String,
     pwd: String,
-    noOfEvents: Int
+    noOfEvents: Int,
 ): Map<String, String> =
     try {
         KafkaConsumer<String, String>(
@@ -175,11 +175,11 @@ suspend fun kafkaConsume(
                 set(ConsumerConfig.GROUP_ID_CONFIG, "funKafkaConsumeGrpID")
                 set(
                     ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                    "org.apache.kafka.common.serialization.StringDeserializer"
+                    "org.apache.kafka.common.serialization.StringDeserializer",
                 )
                 set(
                     ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                    "org.apache.kafka.common.serialization.StringDeserializer"
+                    "org.apache.kafka.common.serialization.StringDeserializer",
                 )
                 set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
                 set(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
@@ -188,16 +188,15 @@ suspend fun kafkaConsume(
                 set(SaslConfigs.SASL_MECHANISM, "PLAIN")
                 set(
                     SaslConfigs.SASL_JAAS_CONFIG,
-                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";"
+                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";",
                 )
-            }
+            },
         ).use { c ->
             c.subscribe(listOf(topic))
 
             val fE = mutableMapOf<String, String>()
 
             withTimeoutOrNull(10_000) {
-
                 while (fE.size < noOfEvents) {
                     delay(100)
                     c.poll(Duration.ofMillis(500)).forEach { e -> fE[e.key()] = e.value() }
@@ -215,7 +214,7 @@ suspend fun kafkaAvroProduce(
     topic: String,
     user: String,
     pwd: String,
-    data: Map<String, GenericRecord>
+    data: Map<String, GenericRecord>,
 ): Boolean =
     try {
         KafkaProducer<String, GenericRecord>(
@@ -224,7 +223,7 @@ suspend fun kafkaAvroProduce(
                 set(ProducerConfig.CLIENT_ID_CONFIG, "funKafkaAvroProduce")
                 set(
                     ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                    "org.apache.kafka.common.serialization.StringSerializer"
+                    "org.apache.kafka.common.serialization.StringSerializer",
                 )
                 set(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "io.confluent.kafka.serializers.KafkaAvroSerializer")
                 set(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
@@ -235,9 +234,9 @@ suspend fun kafkaAvroProduce(
                 set(SaslConfigs.SASL_MECHANISM, "PLAIN")
                 set(
                     SaslConfigs.SASL_JAAS_CONFIG,
-                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";"
+                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";",
                 )
-            }
+            },
         ).use { p ->
             withTimeoutOrNull(10_000) {
                 data.forEach { k, v -> p.send(ProducerRecord(topic, k, v)).get() }
@@ -254,10 +253,9 @@ suspend fun kafkaAvroConsume(
     topic: String,
     user: String,
     pwd: String,
-    noOfEvents: Int
+    noOfEvents: Int,
 ): Map<String, String> =
     try {
-
         KafkaConsumer<String, String>(
             Properties().apply {
                 set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
@@ -265,11 +263,11 @@ suspend fun kafkaAvroConsume(
                 set(ConsumerConfig.GROUP_ID_CONFIG, "funKafkaAvroConsumeGrpID")
                 set(
                     ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                    "org.apache.kafka.common.serialization.StringDeserializer"
+                    "org.apache.kafka.common.serialization.StringDeserializer",
                 )
                 set(
                     ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                    "io.confluent.kafka.serializers.KafkaAvroDeserializer"
+                    "io.confluent.kafka.serializers.KafkaAvroDeserializer",
                 )
                 set(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl)
                 set(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true)
@@ -279,16 +277,15 @@ suspend fun kafkaAvroConsume(
                 set(SaslConfigs.SASL_MECHANISM, "PLAIN")
                 set(
                     SaslConfigs.SASL_JAAS_CONFIG,
-                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";"
+                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED username=\"$user\" password=\"$pwd\";",
                 )
-            }
+            },
         ).use { c ->
             c.subscribe(listOf(topic))
 
             val fE = mutableMapOf<String, String>()
 
             withTimeoutOrNull(10_000) {
-
                 while (fE.size < noOfEvents) {
                     delay(100)
                     c.poll(Duration.ofSeconds(50)).forEach { e -> fE[e.key()] = e.value() }

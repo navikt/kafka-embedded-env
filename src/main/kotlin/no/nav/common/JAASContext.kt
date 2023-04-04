@@ -40,7 +40,6 @@ object JAASCustomUsers {
 }
 
 fun setUpJAASContext() {
-
     val config = object : Configuration() {
 
         val kafkaServerUsersBase = mapOf(
@@ -51,7 +50,7 @@ fun setUpJAASContext() {
             "user_${kafkaC1.username}" to kafkaC1.password,
             "user_${kafkaP1.username}" to kafkaP1.password,
             "user_${kafkaC2.username}" to kafkaC2.password,
-            "user_${kafkaP2.username}" to kafkaP2.password
+            "user_${kafkaP2.username}" to kafkaP2.password,
         ).plus(JAASCustomUsers.getUsers()).toList().toTypedArray()
 
         override fun getAppConfigurationEntry(name: String): Array<AppConfigurationEntry> =
@@ -65,17 +64,17 @@ fun setUpJAASContext() {
                         hashMapOf<String, Any>(
                             "username" to kafkaAdmin.username,
                             "password" to kafkaAdmin.password,
-                            "user_${kafkaAdmin.username}" to kafkaAdmin.password
-                        )
-                    )
+                            "user_${kafkaAdmin.username}" to kafkaAdmin.password,
+                        ),
+                    ),
                 )
                 // kafka server section
                 "sasl_plaintext.KafkaServer" -> arrayOf(
                     AppConfigurationEntry(
                         JAAS_PLAIN_LOGIN,
                         JAAS_CF_REQUIRED,
-                        hashMapOf<String, Any>(*kafkaServerUsersBase)
-                    )
+                        hashMapOf<String, Any>(*kafkaServerUsersBase),
+                    ),
                 )
                 // kafka server as client of zookeeper
                 "Client" -> arrayOf(
@@ -84,9 +83,9 @@ fun setUpJAASContext() {
                         JAAS_CF_REQUIRED,
                         hashMapOf<String, Any>(
                             "username" to kafkaAdmin.username,
-                            "password" to kafkaAdmin.password
-                        )
-                    )
+                            "password" to kafkaAdmin.password,
+                        ),
+                    ),
                 )
                 // kafka client section, e.g. schema registry
                 "KafkaClient" -> arrayOf(
@@ -95,9 +94,9 @@ fun setUpJAASContext() {
                         JAAS_CF_REQUIRED,
                         hashMapOf<String, Any>(
                             "username" to kafkaClient.username,
-                            "password" to kafkaClient.password
-                        )
-                    )
+                            "password" to kafkaClient.password,
+                        ),
+                    ),
                 )
                 else -> {
                     println("JAAS section name -  $name")
@@ -107,9 +106,9 @@ fun setUpJAASContext() {
                             JAAS_CF_REQUIRED,
                             hashMapOf<String, Any>(
                                 "username" to "invalid",
-                                "password" to "invalid"
-                            )
-                        )
+                                "password" to "invalid",
+                            ),
+                        ),
                     )
                 }
             }

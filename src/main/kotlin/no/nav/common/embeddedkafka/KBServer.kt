@@ -19,7 +19,7 @@ class KBServer(
     dataDir: Path,
     zkURL: String,
     withSecurity: Boolean,
-    private val configOverrides: Properties
+    private val configOverrides: Properties,
 ) : ServerBase() {
 
     // see link for KafkaServerStartable below for starting up an embedded kafka broker
@@ -28,14 +28,19 @@ class KBServer(
     override val url = if (withSecurity) "SASL_PLAINTEXT://$host:$port" else "PLAINTEXT://$host:$port"
 
     private val kafkaProperties = getDefaultProps(
-        id, zkURL, noPartitions, dataDir.resolve("log"),
-        dataDir.resolve("logs"), dataDir.resolve("streams"), withSecurity
+        id,
+        zkURL,
+        noPartitions,
+        dataDir.resolve("log"),
+        dataDir.resolve("logs"),
+        dataDir.resolve("streams"),
+        withSecurity,
     )
     private val broker = KafkaServer(
         KafkaConfig(kafkaProperties),
         Time.SYSTEM,
         Option.apply(""),
-        false
+        false,
     )
 
     override fun start() = when (status) {
@@ -64,9 +69,8 @@ class KBServer(
         logDir: Path,
         logDirs: Path,
         stateDir: Path,
-        withSecurity: Boolean
+        withSecurity: Boolean,
     ) = Properties().apply {
-
         // see link below for details - trying to make lean embedded embeddedkafka broker
         // https://kafka.apache.org/documentation/#brokerconfigs
 

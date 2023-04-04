@@ -27,8 +27,8 @@ class SRServer(override val port: Int, private val kbURL: String, private val wi
                     set(SchemaRegistryConfig.LISTENERS_CONFIG, url)
                     set(SchemaRegistryConfig.KAFKASTORE_BOOTSTRAP_SERVERS_CONFIG, kbURL)
                     set(SchemaRegistryConfig.KAFKASTORE_TOPIC_CONFIG, "_schemas")
-                }
-            )
+                },
+            ),
         )
     }
 
