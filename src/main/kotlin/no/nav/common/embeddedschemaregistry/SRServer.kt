@@ -34,8 +34,8 @@ class SRServer(override val port: Int, private val kbURL: String, private val wi
 
     private val sr = mutableListOf<SRS>()
 
-    override fun start() = when (status) {
-        ServerStatus.NotRunning -> {
+    override fun start() {
+        if (status == ServerStatus.NotRunning) {
             SRS(url, kbURL, withSecurity).apply {
                 sr.add(this)
                 scServer.start()
@@ -43,12 +43,10 @@ class SRServer(override val port: Int, private val kbURL: String, private val wi
 
             status = ServerStatus.Running
         }
-        else -> {
-        }
     }
 
-    override fun stop() = when (status) {
-        ServerStatus.Running -> {
+    override fun stop() {
+        if (status == ServerStatus.Running) {
             sr.first().apply {
                 scServer.stop()
                 scServer.join()
@@ -56,8 +54,6 @@ class SRServer(override val port: Int, private val kbURL: String, private val wi
             sr.removeAll { true }
 
             status = ServerStatus.NotRunning
-        }
-        else -> {
         }
     }
 }
