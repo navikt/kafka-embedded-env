@@ -66,15 +66,19 @@ class KafkaEnvironment(
         object NotAvailable : BrokerStatus()
     }
 
-    private fun BrokerStatus.start() = when (this) {
-        is BrokerStatus.Available -> this.brokers.forEach { it.start() }
-        else -> {
+    private fun BrokerStatus.start() {
+        if (this is BrokerStatus.Available) {
+            this.brokers.forEach {
+                it.start()
+            }
         }
     }
 
-    private fun BrokerStatus.stop() = when (this) {
-        is BrokerStatus.Available -> this.brokers.forEach { it.stop() }
-        else -> {
+    private fun BrokerStatus.stop() {
+        if (this is BrokerStatus.Available) {
+            this.brokers.forEach {
+                it.stop()
+            }
         }
     }
 
@@ -117,15 +121,15 @@ class KafkaEnvironment(
         object NotAvailable : SchemaRegistryStatus()
     }
 
-    private fun SchemaRegistryStatus.start() = when (this) {
-        is SchemaRegistryStatus.Available -> this.schemaRegistry.start()
-        else -> {
+    private fun SchemaRegistryStatus.start() {
+        if (this is SchemaRegistryStatus.Available) {
+            this.schemaRegistry.start()
         }
     }
 
-    private fun SchemaRegistryStatus.stop() = when (this) {
-        is SchemaRegistryStatus.Available -> this.schemaRegistry.stop()
-        else -> {
+    private fun SchemaRegistryStatus.stop() {
+        if (this is SchemaRegistryStatus.Available) {
+            this.schemaRegistry.stop()
         }
     }
 
@@ -151,7 +155,7 @@ class KafkaEnvironment(
     // in case of strange config
     private val reqNoOfBrokers = when {
         (noOfBrokers < 1 && (withSchemaRegistry || topics.isNotEmpty())) -> 1
-        (noOfBrokers < 1 && !(withSchemaRegistry || topics.isNotEmpty())) -> 0
+        noOfBrokers < 1 -> 0
         noOfBrokers > 2 -> 2
         else -> noOfBrokers
     }
@@ -216,11 +220,10 @@ class KafkaEnvironment(
      * Start the kafka environment
      */
     fun start() {
-        when (serverPark.status) {
-            is ServerParkStatus.Started -> return
-            is ServerParkStatus.TearDownCompleted -> return
-            else -> {
-            }
+        if (serverPark.status is ServerParkStatus.Started ||
+            serverPark.status is ServerParkStatus.TearDownCompleted
+        ) {
+            return
         }
 
         serverPark = serverPark.let { sp ->
@@ -240,11 +243,10 @@ class KafkaEnvironment(
      * Stop the kafka environment
      */
     private fun stop() {
-        when (serverPark.status) {
-            is ServerParkStatus.Stopped -> return
-            is ServerParkStatus.TearDownCompleted -> return
-            else -> {
-            }
+        if (serverPark.status is ServerParkStatus.Stopped ||
+            serverPark.status is ServerParkStatus.TearDownCompleted
+        ) {
+            return
         }
 
         serverPark = serverPark.let { sp ->
@@ -260,11 +262,12 @@ class KafkaEnvironment(
      * Tear down the kafka environment, removing all data created in environment
      */
     fun tearDown() {
-        when (serverPark.status) {
-            is ServerParkStatus.TearDownCompleted -> return
-            is ServerParkStatus.Started -> stop()
-            else -> {
-            }
+        if (serverPark.status is ServerParkStatus.TearDownCompleted) {
+            return
+        }
+
+        if (serverPark.status is ServerParkStatus.Started) {
+            stop()
         }
 
         deleteDir(zookeeperDataBaseDir)
@@ -291,7 +294,13 @@ class KafkaEnvironment(
         val replFactor = this.brokers.size
 
         this.adminClient?.use { ac ->
-            ac.createTopics(topics.map { topic -> NewTopic(topic.name, topic.partitions, replFactor.toShort()).configs(topic.config) })
+            ac.createTopics(
+                topics.map { topic ->
+                    NewTopic(topic.name, topic.partitions, replFactor.toShort()).configs(
+                        topic.config,
+                    )
+                },
+            )
         }
 
         topicsCreated = true

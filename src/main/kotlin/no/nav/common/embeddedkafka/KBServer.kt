@@ -43,22 +43,18 @@ class KBServer(
         false,
     )
 
-    override fun start() = when (status) {
-        ServerStatus.NotRunning -> {
+    override fun start() {
+        if (status is ServerStatus.NotRunning) {
             broker.startup()
             status = ServerStatus.Running
         }
-        else -> {
-        }
     }
 
-    override fun stop() = when (status) {
-        ServerStatus.Running -> {
+    override fun stop() {
+        if (status is ServerStatus.Running) {
             broker.shutdown()
             broker.awaitShutdown()
             status = ServerStatus.NotRunning
-        }
-        else -> {
         }
     }
 

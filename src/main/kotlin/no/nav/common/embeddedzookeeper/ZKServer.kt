@@ -71,34 +71,29 @@ class ZKServer(override val port: Int, private val dataDir: Path, private val wi
                 send4LCommand(ZookeeperCMDRSP.RUOK.cmd)
             }.any { it == ZookeeperCMDRSP.RUOK.rsp }
 
-    override fun start() = when (status) {
-        ServerStatus.NotRunning -> {
+    override fun start() {
+        if (status == ServerStatus.NotRunning) {
             zk.add(ZKS(port, dataDir, withSecurity))
             waitForZookeeperOk()
             status = ServerStatus.Running
         }
-        else -> {
-        }
     }
 
-    override fun stop() = when (status) {
-        ServerStatus.Running -> {
+    override fun stop() {
+        if (status == ServerStatus.Running) {
             val zks = zk.first()
 
             // stop thread, see InterruptedException in zookeeper initializeAndRun
-            try {
+            runCatching {
                 zks.zkThread.interrupt()
-            } catch (e: Exception) {
-            }
-            try {
+            }.getOrNull()
+
+            runCatching {
                 zks.zkThread.join()
-            } catch (e: Exception) {
-            }
+            }.getOrNull()
 
             zk.removeAll { true }
             status = ServerStatus.NotRunning
-        }
-        else -> {
         }
     }
 
@@ -109,12 +104,12 @@ class ZKServer(override val port: Int, private val dataDir: Path, private val wi
         Socket()
             .apply { this.soTimeout = timeout }
             .use { socket ->
-                try {
+                runCatching {
                     socket.connect(InetSocketAddress(host, port), timeout)
-                } catch (e: Exception) {
-                }
+                }.getOrNull()
                 when (socket.isConnected) {
                     false -> ZOOKEEPER_FOURLEXCEPTION
+
                     else -> {
                         // a couple of functions using socket in scope
                         val sndCmd: () -> Boolean = {
