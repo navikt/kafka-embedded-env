@@ -17,7 +17,7 @@
         <spek.version>2.0.18</spek.version>
         <kluent.version>1.68</kluent.version>
         <slf4j.version>1.7.36</slf4j.version>
-        <coroutines.version>1.6.1</coroutines.version>
+        <coroutines.version>1.7.0</coroutines.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
