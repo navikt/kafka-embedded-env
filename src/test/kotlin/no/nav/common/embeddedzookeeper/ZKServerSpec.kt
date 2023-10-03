@@ -17,7 +17,11 @@ object ZKServerSpec : Spek({
 
     afterGroup { deleteDir(zookeeperBasePath) }
 
-    fun testZKCmds(suite: Suite, zk: ZKServer, i: Int) = suite.apply {
+    fun testZKCmds(
+        suite: Suite,
+        zk: ZKServer,
+        i: Int,
+    ) = suite.apply {
         context("embedded zookeeper (start/commands/stop) - iteration: $i") {
             beforeGroup { zk.start() }
             tests.forEach { cmd, res ->

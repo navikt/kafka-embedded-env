@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jakarta.el.version>3.0.4</jakarta.el.version>
         <commons.collections4.version>4.4</commons.collections4.version>
-        <protobuf.java.version>3.20.3</protobuf.java.version>
+        <protobuf.java.version>3.24.3</protobuf.java.version>
         <javax.el.api.version>3.0.0</javax.el.api.version>
         <netty.common.version>4.1.99.Final</netty.common.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
@@ -258,7 +258,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.1</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -299,7 +299,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.2</version>
                 <configuration>
                     <includes>
                         <include>**/*Spec.*</include>
@@ -312,7 +312,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>include-sources</id>
@@ -343,7 +343,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.0.1</version>
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <useReleaseProfile>true</useReleaseProfile>
@@ -373,7 +373,7 @@
             <plugin>
                 <groupId>com.github.gantsign.maven</groupId>
                 <artifactId>ktlint-maven-plugin</artifactId>
-                <version>1.16.0</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>format</id>

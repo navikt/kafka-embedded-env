@@ -31,10 +31,14 @@ import org.spekframework.spek2.style.specification.describe
 
 object KafkaEnvironmentSpec : Spek({
 
-    fun getTests(noBrokers: Int, topics: List<String>): List<TxtCmdRes> = listOf(
-        TxtCmdRes("should have '$noBrokers' of broker(s)", noOfBrokers, noBrokers),
-        TxtCmdRes("should have '${topics.size}' topics available", noOfTopics, topics.size),
-    )
+    fun getTests(
+        noBrokers: Int,
+        topics: List<String>,
+    ): List<TxtCmdRes> =
+        listOf(
+            TxtCmdRes("should have '$noBrokers' of broker(s)", noOfBrokers, noBrokers),
+            TxtCmdRes("should have '${topics.size}' topics available", noOfTopics, topics.size),
+        )
 
     describe("default kafka environment") {
 
@@ -139,9 +143,10 @@ object KafkaEnvironmentSpec : Spek({
     describe("basic kafka environment with topicInfos and topicNames") {
 
         val topicNames = listOf("basic01", "basic02")
-        val topicInfos = listOf(
-            KafkaEnvironment.TopicInfo("advanced01", 4, mapOf("retention.ms" to "5000")),
-        )
+        val topicInfos =
+            listOf(
+                KafkaEnvironment.TopicInfo("advanced01", 4, mapOf("retention.ms" to "5000")),
+            )
 
         val expectedTopicNames = topicNames + topicInfos.map { it.name }
 
@@ -169,11 +174,12 @@ object KafkaEnvironmentSpec : Spek({
         topicInfos.forEach { topicInfo ->
             topicInfo.config?.forEach { (config, value) ->
                 it("should have config $config with $value for ${topicInfo.name}") {
-                    val describeConfigs = ac?.describeConfigs(
-                        topicInfos
-                            .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) },
-                    )?.all()?.get()!!
-                        .map { (k, v) -> (k.name() to v.get(config).value()) }.toMap()
+                    val describeConfigs =
+                        ac?.describeConfigs(
+                            topicInfos
+                                .map { ConfigResource(ConfigResource.Type.TOPIC, it.name) },
+                        )?.all()?.get()!!
+                            .map { (k, v) -> (k.name() to v.get(config).value()) }.toMap()
                     describeConfigs["advanced01"] shouldBeEqualTo value
                 }
             }
@@ -531,26 +537,28 @@ object KafkaEnvironmentSpec : Spek({
         val env = KafkaEnvironment(topicNames = topics, withSecurity = true, withSchemaRegistry = true)
         var ac: AdminClient? = null
 
-        val schemaSource = """
-                  {
-                      "namespace" : "no.nav.common",
-                      "type" : "record",
-                      "name" : "BasicAvroRecord",
-                      "fields" : [
-                        {"name": "number", "type": "int"}
-                      ]
-                    }
+        val schemaSource =
+            """
+            {
+                "namespace" : "no.nav.common",
+                "type" : "record",
+                "name" : "BasicAvroRecord",
+                "fields" : [
+                  {"name": "number", "type": "int"}
+                ]
+              }
 
-        """.trimIndent()
+            """.trimIndent()
 
         val avroSchema = Schema.Parser().parse(schemaSource)
 
-        val events: Map<String, GenericRecord> = (1..9).map {
-            "$it" to
-                GenericData.Record(avroSchema).apply {
-                    put("number", it)
-                }
-        }.toMap()
+        val events: Map<String, GenericRecord> =
+            (1..9).map {
+                "$it" to
+                    GenericData.Record(avroSchema).apply {
+                        put("number", it)
+                    }
+            }.toMap()
 
         beforeGroup {
             env.start()

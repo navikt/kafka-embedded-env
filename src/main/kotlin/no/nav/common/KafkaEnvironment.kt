@@ -82,39 +82,42 @@ class KafkaEnvironment(
         }
     }
 
-    private fun BrokerStatus.getBrokers(): List<ServerBase> = when (this) {
-        is BrokerStatus.Available -> this.brokers
-        else -> emptyList()
-    }
+    private fun BrokerStatus.getBrokers(): List<ServerBase> =
+        when (this) {
+            is BrokerStatus.Available -> this.brokers
+            else -> emptyList()
+        }
 
-    private fun BrokerStatus.getBrokersURL(): String = when (this) {
-        is BrokerStatus.Available -> this.brokersURL
-        else -> ""
-    }
+    private fun BrokerStatus.getBrokersURL(): String =
+        when (this) {
+            is BrokerStatus.Available -> this.brokersURL
+            else -> ""
+        }
 
-    private fun BrokerStatus.createAdminClient(): AdminClient? = when (this) {
-        is BrokerStatus.Available ->
-            if (serverPark.status is ServerParkStatus.Started) {
-                AdminClient.create(
-                    Properties().apply {
-                        set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
-                        set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
-                        if (withSecurity) {
-                            set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
-                            set(SaslConfigs.SASL_MECHANISM, "PLAIN")
-                            set(
-                                SaslConfigs.SASL_JAAS_CONFIG,
-                                "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED " +
-                                    "username=\"${kafkaClient.username}\" password=\"${kafkaClient.password}\";",
-                            )
-                        }
-                    },
-                )
-            } else {
-                null
-            }
-        else -> null
-    }
+    private fun BrokerStatus.createAdminClient(): AdminClient? =
+        when (this) {
+            is BrokerStatus.Available ->
+                if (serverPark.status is ServerParkStatus.Started) {
+                    AdminClient.create(
+                        Properties().apply {
+                            set(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokersURL)
+                            set(ConsumerConfig.CLIENT_ID_CONFIG, "embkafka-adminclient")
+                            if (withSecurity) {
+                                set(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT")
+                                set(SaslConfigs.SASL_MECHANISM, "PLAIN")
+                                set(
+                                    SaslConfigs.SASL_JAAS_CONFIG,
+                                    "$JAAS_PLAIN_LOGIN $JAAS_REQUIRED " +
+                                        "username=\"${kafkaClient.username}\" password=\"${kafkaClient.password}\";",
+                                )
+                            }
+                        },
+                    )
+                } else {
+                    null
+                }
+            else -> null
+        }
 
     sealed class SchemaRegistryStatus {
         data class Available(val schemaRegistry: ServerBase) : SchemaRegistryStatus()
@@ -133,10 +136,11 @@ class KafkaEnvironment(
         }
     }
 
-    private fun SchemaRegistryStatus.getSchemaReg(): ServerBase? = when (this) {
-        is SchemaRegistryStatus.Available -> this.schemaRegistry
-        else -> null
-    }
+    private fun SchemaRegistryStatus.getSchemaReg(): ServerBase? =
+        when (this) {
+            is SchemaRegistryStatus.Available -> this.schemaRegistry
+            else -> null
+        }
 
     sealed class ServerParkStatus {
         object Initialized : ServerParkStatus()
@@ -153,12 +157,13 @@ class KafkaEnvironment(
     )
 
     // in case of strange config
-    private val reqNoOfBrokers = when {
-        (noOfBrokers < 1 && (withSchemaRegistry || topics.isNotEmpty())) -> 1
-        noOfBrokers < 1 -> 0
-        noOfBrokers > 2 -> 2
-        else -> noOfBrokers
-    }
+    private val reqNoOfBrokers =
+        when {
+            (noOfBrokers < 1 && (withSchemaRegistry || topics.isNotEmpty())) -> 1
+            noOfBrokers < 1 -> 0
+            noOfBrokers > 2 -> 2
+            else -> noOfBrokers
+        }
 
     // in case of start of environment will be manually triggered later on
     private var topicsCreated = false
@@ -178,33 +183,36 @@ class KafkaEnvironment(
 
         val zk = ZKServer(getAvailablePort(), dataDirFor(zookeeperDataBaseDir), withSecurity)
 
-        val kBrokers = (0 until reqNoOfBrokers).map {
-            KBServer(
-                getAvailablePort(),
-                it,
-                reqNoOfBrokers,
-                dataDirFor(kafkaBrokerDataBaseDir),
-                zk.url,
-                withSecurity,
-                brokerConfigOverrides,
-            )
-        }
-        val brokersURL = kBrokers.map { it.url }.foldRight("") { u, acc ->
-            if (acc.isEmpty()) u else "$u,$acc"
-        }
+        val kBrokers =
+            (0 until reqNoOfBrokers).map {
+                KBServer(
+                    getAvailablePort(),
+                    it,
+                    reqNoOfBrokers,
+                    dataDirFor(kafkaBrokerDataBaseDir),
+                    zk.url,
+                    withSecurity,
+                    brokerConfigOverrides,
+                )
+            }
+        val brokersURL =
+            kBrokers.map { it.url }.foldRight("") { u, acc ->
+                if (acc.isEmpty()) u else "$u,$acc"
+            }
 
-        serverPark = ServerPark(
-            zk,
-            when (reqNoOfBrokers) {
-                0 -> BrokerStatus.NotAvailable
-                else -> BrokerStatus.Available(kBrokers, brokersURL)
-            },
-            when (withSchemaRegistry) {
-                false -> SchemaRegistryStatus.NotAvailable
-                else -> SchemaRegistryStatus.Available(SRServer(getAvailablePort(), brokersURL, withSecurity))
-            },
-            ServerParkStatus.Initialized,
-        )
+        serverPark =
+            ServerPark(
+                zk,
+                when (reqNoOfBrokers) {
+                    0 -> BrokerStatus.NotAvailable
+                    else -> BrokerStatus.Available(kBrokers, brokersURL)
+                },
+                when (withSchemaRegistry) {
+                    false -> SchemaRegistryStatus.NotAvailable
+                    else -> SchemaRegistryStatus.Available(SRServer(getAvailablePort(), brokersURL, withSecurity))
+                },
+                ServerParkStatus.Initialized,
+            )
 
         if (autoStart) start()
     }
@@ -226,13 +234,14 @@ class KafkaEnvironment(
             return
         }
 
-        serverPark = serverPark.let { sp ->
-            sp.zookeeper.start()
-            sp.brokerStatus.start()
-            sp.schemaRegStatus.start()
+        serverPark =
+            serverPark.let { sp ->
+                sp.zookeeper.start()
+                sp.brokerStatus.start()
+                sp.schemaRegStatus.start()
 
-            ServerPark(sp.zookeeper, sp.brokerStatus, sp.schemaRegStatus, ServerParkStatus.Started)
-        }
+                ServerPark(sp.zookeeper, sp.brokerStatus, sp.schemaRegStatus, ServerParkStatus.Started)
+            }
 
         if (serverPark.brokerStatus is BrokerStatus.Available && topics.isNotEmpty() && !topicsCreated) {
             createTopics(topics)
@@ -249,13 +258,14 @@ class KafkaEnvironment(
             return
         }
 
-        serverPark = serverPark.let { sp ->
-            sp.schemaRegStatus.stop()
-            sp.brokerStatus.stop()
-            sp.zookeeper.stop()
+        serverPark =
+            serverPark.let { sp ->
+                sp.schemaRegStatus.stop()
+                sp.brokerStatus.stop()
+                sp.zookeeper.stop()
 
-            ServerPark(sp.zookeeper, sp.brokerStatus, sp.schemaRegStatus, ServerParkStatus.Stopped)
-        }
+                ServerPark(sp.zookeeper, sp.brokerStatus, sp.schemaRegStatus, ServerParkStatus.Stopped)
+            }
     }
 
     /**
@@ -273,12 +283,13 @@ class KafkaEnvironment(
         deleteDir(zookeeperDataBaseDir)
         deleteDir(kafkaBrokerDataBaseDir)
 
-        serverPark = ServerPark(
-            serverPark.zookeeper,
-            BrokerStatus.NotAvailable,
-            SchemaRegistryStatus.NotAvailable,
-            ServerParkStatus.TearDownCompleted,
-        )
+        serverPark =
+            ServerPark(
+                serverPark.zookeeper,
+                BrokerStatus.NotAvailable,
+                SchemaRegistryStatus.NotAvailable,
+                ServerParkStatus.TearDownCompleted,
+            )
     }
 
     override fun close() {

@@ -21,27 +21,28 @@ class KBServer(
     withSecurity: Boolean,
     private val configOverrides: Properties,
 ) : ServerBase() {
-
     // see link for KafkaServerStartable below for starting up an embedded kafka broker
     // https://github.com/apache/kafka/blob/2.2/core/src/main/scala/kafka/server/KafkaServerStartable.scala
 
     override val url = if (withSecurity) "SASL_PLAINTEXT://$host:$port" else "PLAINTEXT://$host:$port"
 
-    private val kafkaProperties = getDefaultProps(
-        id,
-        zkURL,
-        noPartitions,
-        dataDir.resolve("log"),
-        dataDir.resolve("logs"),
-        dataDir.resolve("streams"),
-        withSecurity,
-    )
-    private val broker = KafkaServer(
-        KafkaConfig(kafkaProperties),
-        Time.SYSTEM,
-        Option.apply(""),
-        false,
-    )
+    private val kafkaProperties =
+        getDefaultProps(
+            id,
+            zkURL,
+            noPartitions,
+            dataDir.resolve("log"),
+            dataDir.resolve("logs"),
+            dataDir.resolve("streams"),
+            withSecurity,
+        )
+    private val broker =
+        KafkaServer(
+            KafkaConfig(kafkaProperties),
+            Time.SYSTEM,
+            Option.apply(""),
+            false,
+        )
 
     override fun start() {
         if (status is ServerStatus.NotRunning) {

@@ -37,37 +37,41 @@ import java.util.Properties
 
 data class TxtCmdRes(val txt: String, val cmd: (AdminClient?) -> Int, val res: Int)
 
-fun AdminClient?.noOfBrokers(): Int = try {
-    this?.describeCluster()?.nodes()?.get()?.toList()?.size ?: -1
-} catch (e: Exception) {
-    -1
-}
+fun AdminClient?.noOfBrokers(): Int =
+    try {
+        this?.describeCluster()?.nodes()?.get()?.toList()?.size ?: -1
+    } catch (e: Exception) {
+        -1
+    }
 
 val noOfBrokers: (AdminClient?) -> Int = { it.noOfBrokers() }
 
-fun AdminClient?.noOfTopics(): Int = try {
-    this?.listTopics()?.names()?.get()?.toList()?.size ?: -1
-} catch (e: Exception) {
-    -1
-}
+fun AdminClient?.noOfTopics(): Int =
+    try {
+        this?.listTopics()?.names()?.get()?.toList()?.size ?: -1
+    } catch (e: Exception) {
+        -1
+    }
 
 val noOfTopics: (AdminClient?) -> Int = { it.noOfTopics() }
 
-fun AdminClient?.topics(): List<String> = try {
-    this?.listTopics()?.names()?.get()?.toList() ?: emptyList()
-} catch (e: Exception) {
-    emptyList()
-}
+fun AdminClient?.topics(): List<String> =
+    try {
+        this?.listTopics()?.names()?.get()?.toList() ?: emptyList()
+    } catch (e: Exception) {
+        emptyList()
+    }
 
 // some schema registry test utilities
 
 const val SCHEMAREG_DefaultCompatibilityLevel = """{"compatibilityLevel":"BACKWARD"}"""
 const val SCHEMAREG_NoSubjects = """[]"""
 
-val scRegTests = mapOf(
-    "should report default compatibility level" to Pair("/config", SCHEMAREG_DefaultCompatibilityLevel),
-    "should report zero subjects" to Pair("/subjects", SCHEMAREG_NoSubjects),
-)
+val scRegTests =
+    mapOf(
+        "should report default compatibility level" to Pair("/config", SCHEMAREG_DefaultCompatibilityLevel),
+        "should report zero subjects" to Pair("/subjects", SCHEMAREG_NoSubjects),
+    )
 
 suspend fun HttpClient.getSomething(endpoint: URL): String =
     this.get {
