@@ -26,7 +26,7 @@
         <protobuf.java.version>3.20.3</protobuf.java.version>
         <javax.el.api.version>3.0.0</javax.el.api.version>
         <netty.common.version>4.1.99.Final</netty.common.version>
-        <jackson-databind.version>2.13.4.2</jackson-databind.version>
+        <jackson-databind.version>2.15.2</jackson-databind.version>
     </properties>
 
     <repositories>
