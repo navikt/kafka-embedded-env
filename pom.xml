@@ -11,7 +11,7 @@
 
     <properties>
         <kotlin.version>1.9.10</kotlin.version>
-        <kafka.version>3.5.1</kafka.version>
+        <kafka.version>3.6.0</kafka.version>
         <ktor.version>2.3.5</ktor.version>
         <confluent.version>7.5.1</confluent.version>
         <spek.version>2.0.18</spek.version>
