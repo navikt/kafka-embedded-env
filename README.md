@@ -293,6 +293,12 @@ class KafkaEnvironment(
 `class KafkaEnvironment`:
  - The parameter `topics` should be renamed to `topicNames` if you wish to keep the behaviour from previous versions.
 
+#### Local development
+Build and test
+``` shell script
+./mvnw clean install
+```
+
 ## Contact
 
 Create an issue here on the GitHub issue tracker. Pull requests are also welcome.
