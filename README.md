@@ -51,7 +51,7 @@ Add the dependency:
 #### Gradle
 ```
 dependencies {
-    testImplementation "no.nav:kafka-embedded-env:3.2.2"
+    testImplementation "no.nav:kafka-embedded-env:3.2.4"
 }
 ```
 
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>3.2.2</version>
+    <version>3.2.4</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -169,129 +169,16 @@ for the set of available operations.
 
 **Please close adminClient after use.**
 
-## Changelog
-
-### [3.2.2]
-- Upgrade to Confluent 7.3.1
-- Upgrade to Kafka 3.2.3
-- Upgrade to Surefire 3.0.0-M8
-
-### [3.2.1]
-- Moved some dependencies from scope test
-
-### [3.2.0]
-- Fix Snyk issues
-
-### [3.1.7]
-- Upgrade to Confluent 7.2.1
-- Upgrade to Ktor 2.0.3
-- Upgrade to Kafka 3.2
-
-### [3.1.4]
-- Upgrade to Ktor 2.0.1
-- Change to use Apache maven wrapper
-
-### [3.1.3]
-- Dependency bumps Confluent 7.1.1
-- Github actions setup-java to v3
-
-### [3.1.2]
-- Bad merge fix
-
-### [3.1.1]
-- Upgrade to Kotlin 1.6.20
-- Upgrade to Ktor 2.0.0
-- Upgrade to Java to 17
-
-### [3.1.0]
-- Kafka 3.1.0
-- Confluent Platform 7.1.0
-- Kotlin 1.6.20
-- Ktor 1.6.8
-- Logback 1.2.11
-- Slf4j 1.7.33
-
-### [2.8.1]
-- Multiple dependency bumps:
-- Kafka 2.8.1
-- Confluent Platform 6.2.1
-- Kotlin 1.6.0
-- Ktor 1.6.5
-- Spek 2.0.17
-- Slf4j 1.7.32
-- Logback 1.2.7
-- Kluent 1.68
-
-### [2.8.0]
-- Upgrade to Kafka 2.8.0
-- Upgrade to Confluent Platform 6.2.0
-
-### [2.7.0]
-- Upgrade to Kafka 2.7.0
-- Upgrade to Confluent Platform 6.1.0
-- Changed to Kafka Scala build 2.13
-
-### [2.5.0]
-- Upgrade to Kafka 2.5.0
-- Upgrade to Confluent Platform 5.5.0
-- Fixes issue where config overrides were not passed to the AdminClient
-
-### [2.4.0]
-- Upgrade to Kafka 2.4.0
-- Upgrade to Confluent Platform 5.4.0
-
-### [2.3.0]
-- Use Kafka 2.3.1
-- Use Confluent 5.3.1
-
-### [2.2.3]
-- Increase default Zookeeper connection timeout from Kafka brokers in another attempt to remediate sporadically failing tests on slow machines
-
-### [2.2.2]
-- Another attempt at increasing waiting attempts for embedded Zookeeper in attempt to remediate sporadically failing tests on slow machines  
-
-### [2.2.1]
-- Increase timeouts against embedded Zookeeper in attempt to remediate sporadically failing tests on slow machines  
-
-### [2.2.0]
-- Upgrade to Kafka 2.3.0
-- Upgrade to confluent platform 5.3.0
-
-### [2.1.1]
-
-- Improved path handling for temporary files (#7)
-
-### [2.1.0]
-
-#### What's new?
-
-The possibility to override topic as well as broker configurations:
-
-```
-@param topicInfos a list of topics to create at environment startup - default empty
-@param topicNames same as topicInfos, but for topics that can use the default values
-@param brokerConfigOverrides possibility to override broker configuration
-```
-
-```kotlin
-class KafkaEnvironment(
-    noOfBrokers: Int = 1,
-    topicNames: List<String> = emptyList(),
-    topicInfos: List<TopicInfo> = emptyList(),
-    withSchemaRegistry: Boolean = false,
-    val withSecurity: Boolean = false,
-    users: List<JAASCredential> = emptyList(),
-    autoStart: Boolean = false,
-    brokerConfigOverrides: Properties = Properties()
-) : AutoCloseable {
-    data class TopicInfo(val name: String, val partitions: Int = 2, val config: Map<String, String>? = null)
-}
-```
-
 #### Breaking changes from 2.0.x
 
 `class KafkaEnvironment`:
  - The parameter `topics` should be renamed to `topicNames` if you wish to keep the behaviour from previous versions.
+
+#### Local development
+Build and test
+``` shell script
+./mvnw clean install
+```
 
 ## Contact
 

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>no.nav</groupId>
     <artifactId>kafka-embedded-env</artifactId>
-    <version>3.2.2-SNAPSHOT</version>
+    <version>3.2.5-SNAPSHOT</version>
     <name>kafka-embedded-env</name>
     <description>Simple API for running a Kafka/Confluent environment locally</description>
     <url>https://github.com/navikt/kafka-embedded-env</url>
