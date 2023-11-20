@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jakarta.el.version>3.0.4</jakarta.el.version>
         <commons.collections4.version>4.4</commons.collections4.version>
-        <protobuf.java.version>3.25.0</protobuf.java.version>
+        <protobuf.java.version>3.25.1</protobuf.java.version>
         <javax.el.api.version>3.0.0</javax.el.api.version>
         <netty.common.version>4.1.101.Final</netty.common.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
