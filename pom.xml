@@ -10,7 +10,7 @@
     <url>https://github.com/navikt/kafka-embedded-env</url>
 
     <properties>
-        <kotlin.version>1.9.22</kotlin.version>
+        <kotlin.version>1.9.23</kotlin.version>
         <kafka.version>3.6.1</kafka.version>
         <ktor.version>2.3.9</ktor.version>
         <confluent.version>7.6.0</confluent.version>
