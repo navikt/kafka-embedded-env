@@ -137,11 +137,6 @@
             <artifactId>protobuf-java-util</artifactId>
             <version>${protobuf.java.version}</version>
         </dependency>
-        <dependency>
-            <groupId>jakarta.el</groupId>
-            <artifactId>jakarta.el-api</artifactId>
-            <version>${jakarta.el.api.version}</version>
-        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
