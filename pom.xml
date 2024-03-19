@@ -21,10 +21,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jakarta.el.version>3.0.4</jakarta.el.version>
         <commons.collections4.version>4.4</commons.collections4.version>
         <protobuf.java.version>3.25.3</protobuf.java.version>
-        <javax.el.api.version>3.0.0</javax.el.api.version>
+        <jakarta.el.api.version>5.0.1</jakarta.el.api.version>
         <netty.common.version>4.1.107.Final</netty.common.version>
         <jackson-databind.version>2.13.4.2</jackson-databind.version>
     </properties>
@@ -115,10 +114,6 @@
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java-util</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.glassfish</groupId>
-                    <artifactId>jakarta.el</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -143,20 +138,9 @@
             <version>${protobuf.java.version}</version>
         </dependency>
         <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>javax.el-api</artifactId>
-            <version>${javax.el.api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.el</artifactId>
-            <version>${jakarta.el.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>junit</groupId>
-                    <artifactId>junit</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>jakarta.el</groupId>
+            <artifactId>jakarta.el-api</artifactId>
+            <version>${jakarta.el.api.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
