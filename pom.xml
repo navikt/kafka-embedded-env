@@ -13,7 +13,7 @@
         <kotlin.version>1.9.23</kotlin.version>
         <kafka.version>3.6.1</kafka.version>
         <ktor.version>2.3.10</ktor.version>
-        <confluent.version>7.6.0</confluent.version>
+        <confluent.version>7.6.1</confluent.version>
         <spek.version>2.0.18</spek.version>
         <kluent.version>1.73</kluent.version>
         <slf4j.version>2.0.13</slf4j.version>
