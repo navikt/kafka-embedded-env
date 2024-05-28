@@ -9,6 +9,7 @@ updates:
       - dependency-name: "com.fasterxml.jackson.core:jackson-databind"
       - dependency-name: "org.slf4j:slf4j-log4j12"
       - dependency-name: "protobuf.java.version"
+      - dependency-name: "org.sonatype.plugins:nexus-staging-maven-plugin"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
