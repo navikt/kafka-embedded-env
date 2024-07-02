@@ -1,4 +1,4 @@
-# Use Kafka with testcontainers
+# Use Kafka with testcontainers https://testcontainers.com/
 
 [![Build Status](https://travis-ci.org/navikt/kafka-embedded-env.svg?branch=master)](https://travis-ci.org/navikt/kafka-embedded-env) 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/no.nav/kafka-embedded-env/badge.svg)](https://maven-badges.herokuapp.com/maven-central/no.nav/kafka-embedded-env)
